@@ -87,7 +87,7 @@ const UserForm: React.FC<UserFormProps> = ({ userData }) => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
-        <FormField 
+        <FormField  
           control={form.control}
           name='honorific'
           render={({ field }) => ( 
@@ -193,7 +193,7 @@ const UserForm: React.FC<UserFormProps> = ({ userData }) => {
           render={({ field }) => ( 
             <FormItem>
               <FormLabel>User Type: </FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!!userData}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder=""/>

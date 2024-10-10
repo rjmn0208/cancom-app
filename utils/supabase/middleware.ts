@@ -43,6 +43,7 @@ export async function updateSession(request: NextRequest) {
       },
     },
   );
+  
 
     // IMPORTANT: Avoid writing any logic between createServerClient and
     // supabase.auth.getUser(). A simple mistake could make it very hard to debug

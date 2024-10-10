@@ -102,7 +102,7 @@ const VitalsReadingPage = () => {
               </TableCell>
               <TableCell>{reading.Vitals.name}</TableCell>
               <TableCell>{reading.value} {reading.Vitals.unitOfMeasure}</TableCell>
-              <TableCell>{reading.createdAt}</TableCell>
+              <TableCell>{new Date(reading.createdAt).toDateString()}</TableCell>
               <TableCell>
               <Dialog>
                 <DialogTrigger asChild>
