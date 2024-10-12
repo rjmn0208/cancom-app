@@ -37,9 +37,10 @@ export const signInAction = async (formData: FormData) => {
     password: formData.get('password') as string,
   }
 
-  const { error } = await supabase.auth.signInWithPassword(data)
+  const { data: signinData, error: signInErr } = await supabase.auth.signInWithPassword(data)
+  console.log(signInErr)
 
-  if (error) {
+  if (signInErr) {
     return redirect('/error')
   }
 
@@ -50,7 +51,7 @@ export const signInAction = async (formData: FormData) => {
 export const signOutAction = async () => {
   const supabase = createClient();
   await supabase.auth.signOut();
-  return redirect('/sign-in')
+  // return redirect('/sign-in')
 };
 
 export const signInWithGoogle = async() => {
