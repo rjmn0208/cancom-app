@@ -8,9 +8,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Button } from './ui/button';
-import { Patient, Vitals, VitalsReading } from '@/lib/types';
+import { Patient, VitalReading, Vitals } from '@/lib/types';
 import { createClient } from '@/utils/supabase/client';
-import { create } from 'domain';
 
 const formSchema = z.object({
   recordedBy: z.string(),
@@ -22,7 +21,7 @@ const formSchema = z.object({
 type FormSchemaType = z.infer<typeof formSchema>;
 
 interface VitalReadingFormProps {
-  vitalReading?: Partial<VitalsReading>
+  vitalReading?: Partial<VitalReading>
 }
 const VitalReadingForm: React.FC<VitalReadingFormProps> = ({vitalReading}) => {
   const [vitals, setVitals] = useState<Vitals[] | null>([]);
@@ -77,7 +76,7 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({vitalReading}) => {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       
       const {data, error} = await supabase
-      .from('VitalsReading')
+      .from('VitalReading')
       .update({
         recordedBy: user?.id,
         patientId: values.patientId,
@@ -91,7 +90,7 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({vitalReading}) => {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
 
       const {data, error} = await supabase
-      .from('VitalsReading')
+      .from('VitalReading')
       .insert({
         recordedBy: user?.id,
         patientId: values.patientId,

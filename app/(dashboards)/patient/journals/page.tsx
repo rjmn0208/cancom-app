@@ -14,29 +14,16 @@ import { useEffect, useState } from "react"
 
 export default function JournalPage() {
   const [journals, setJournals] = useState<JournalEntry[] | null>(null)
-  const [patient, setPatient] = useState<Patient | null>(null);
   
   const fetchJournals = async () =>{
     const supabase = createClient();
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-    const { data: patientData, error: patientError } = await supabase
-      .from('Patient')
-      .select('*, User(*)')
-      .eq('userId', user?.id)
-      .single();
-      
     const {data: journalData, error} = await supabase
       .from('JournalEntry')
       .select(`*, 
         Patient(*)
-      `)
-      .eq("patientId", patientData.id)
-      
-    setPatient(patientData)
+        `)
     setJournals(journalData)
   }  
-
 
   const handleDelete = async(journal: JournalEntry) => {
     const supabase = createClient();
@@ -44,6 +31,7 @@ export default function JournalPage() {
       .from('JournalEntry')
       .delete()
       .eq('id', journal.id)
+
     await fetchJournals()
   }
   
@@ -71,7 +59,7 @@ export default function JournalPage() {
       </div>
 
       <div className="space-y-4">
-      {journals?.map((journal: JournalEntry) => (
+      {journals.map((journal: JournalEntry) => (
         <Card key={journal.id}>
           <CardHeader>
             <CardTitle>{journal.title}</CardTitle>

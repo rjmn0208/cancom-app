@@ -14,44 +14,33 @@ import {
 } from "@/components/ui/table"
 import VitalReadingForm from '@/components/VitalReadingForm'
 
-import { Patient, VitalsReading } from '@/lib/types'
+import { VitalReading,  } from '@/lib/types'
 import { createClient } from '@/utils/supabase/client'
 import React, { useEffect, useState } from 'react'
 
 const VitalsReadingPage = () => {
-  const [readings, setReadings] = useState<VitalsReading[] | null>(null)
-  const [patient, setPatient] = useState<Patient | null>(null)
+  const [readings, setReadings] = useState<VitalReading[] | null>(null)
 
   const fetchVitalsReading = async () => {
     const supabase = createClient();
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-    const { data: patientData, error: patientError } = await supabase
-      .from('Patient')
-      .select(`*, User(*)`)
-      .eq('userId', user?.id)
-      .single();
-
-    const {data: vitalReadings, error: vitalReadingsError} = await supabase
-      .from('VitalsReading')
+    const {data: vitalsReading, error: vitalReadingsError} = await supabase
+      .from('VitalReading')
       .select(`*, 
         Vitals(*),
         Patient(*, 
           User(*)),
         RecordedBy: User(*)
       `)
-      .eq('patientId', patientData.id)
-      
-      setPatient(patientData)
-      setReadings(vitalReadings)
+      setReadings(vitalsReading)
   }
   
-  const handleDelete = async(vitalReading: VitalsReading) => {
+  const handleDelete = async(vitalReading: VitalReading) => {
     const supabase = createClient();
-    const {data: vitalReadings, error: vitalReadingsError} = await supabase
-      .from('VitalsReading')
+    const {data, error} = await supabase
+      .from('VitalReading')
       .delete()
       .eq('id', vitalReading.id)
+
     await fetchVitalsReading()
   }
 
@@ -91,7 +80,7 @@ const VitalsReadingPage = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {readings?.map((reading: VitalsReading) => (
+          {readings.map((reading: VitalReading) => (
             <TableRow>
               <TableCell>{reading.id}</TableCell>
               <TableCell>

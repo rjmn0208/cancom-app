@@ -39,7 +39,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             Journals
           </Link>
           <Link
-            href="/patient/vitals"
+            href="/patient/vitalreadings"
             className="block text-muted-foreground hover:text-foreground transition-colors"
           >
             Vitals Log

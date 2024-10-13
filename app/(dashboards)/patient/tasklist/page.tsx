@@ -1,49 +1,77 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
-import { Patient } from '@/lib/types'
-import { createClient } from '@/utils/supabase/client'
-import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/dist/server/api-utils'
-import React from 'react'
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { TaskList } from '@/lib/types';
+import { createClient } from '@/utils/supabase/client';
+import { ClipboardList } from 'lucide-react';
+import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
 
-const getPatient = async (): Promise<Patient[] | null> => {
-  const supabase = createClient()
-  const {data: {user}} = await supabase.auth.getUser()
-  const {data: Patient, error} = await supabase
-  .from('Patient')
-  .select('*, User(*) ')
-  .eq('userId', user?.id)
-  
-  if(error){
-    console.log(error)
-  }
-  return Patient
+const TaskListPage = () => {
+  const [taskListId, setTaskListId] = useState<number | null>(null);
+  const [patientId, setPatientId] = useState<number | null>(null);
+  const supabase = createClient();
+  const router = useRouter();  
+  const getPatientId = async () => {
+    const {data: {user}} = await supabase.auth.getUser();
+    const {data, error} = await supabase
+    .from('Patient')
+    .select('id')
+    .eq('userId', user?.id)
+    .single()
 
-}
-const handleCreateTaskList = async () => {
-  const supabase = createClient()
-  const patient = await getPatient()
-  if (patient && patient.length > 0) { 
-    const { data: TaskList, error } = await supabase
-      .from('TaskList')
-      .insert([{ patientId: patient[0].id }]) 
-      .select()
-    
-    if (error) {
-      console.error(error)
+    if(data){
+      setPatientId(data.id)
     }
   }
-}
-const TaskListPage = () => {
+
+  const handleCreateTaskList =  async () => {
+    const {data, error} =  await supabase
+    .from('TaskList')
+    .insert([{
+      patientId: patientId
+    }])
+  }
+
+  const getTaskListId =  async () => {
+    const {data, error} =  await supabase
+    .from('TaskList')
+    .select('id')
+    .single()
+
+    if(data){
+      setTaskListId(data.id)
+    }
+  }
+
+  useEffect(() => {
+    getPatientId();
+  }, []);
+
+  // Redirect when taskListId is available
+  useEffect(() => {
+    if (taskListId) {
+      router.push(`/patient/tasklist/${taskListId}`);  // Redirect to task list
+    }
+  }, [taskListId, router]);
+
   return (
-    <>
-      <p>You have no task list.</p>
-      <form action={handleCreateTaskList}>
-        <Button type='submit'>Generate TaskList</Button>
-      </form>
-    </>
+    <div className="flex items-center justify-center min-h-screen bg-background p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <ClipboardList className="w-12 h-12 mx-auto mb-4 text-primary" />
+          <CardTitle>You Have No Task List Yet!</CardTitle>
+        </CardHeader>
+        <CardContent className="flex justify-center">
+          <Button>
+            Generate Task List
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
   )
 }
 
 export default TaskListPage
+

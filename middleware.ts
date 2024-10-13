@@ -16,7 +16,7 @@ export async function middleware(request: NextRequest) {
     DOCTOR: '/doctor'
   }
   
-  const AUTH_PATHS = ['/sign-ip','/sign-up', '/onboarding']
+  const AUTH_PATHS = ['/sign-in','/sign-up', '/onboarding']
 
   const inAuthPath = AUTH_PATHS.includes(currentPath)
   const inProtectedPath = Object.values(PROTECTED_PATHS_PREFIX).some((path) =>
@@ -26,7 +26,7 @@ export async function middleware(request: NextRequest) {
     return pathname.startsWith(PROTECTED_PATHS_PREFIX[userType]);
   };
 
-  if (!user && inProtectedPath ) {
+  if (!user && inProtectedPath) {
     return NextResponse.redirect(new URL("/sign-in", request.url));
   }
   

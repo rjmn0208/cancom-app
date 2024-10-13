@@ -62,7 +62,7 @@ export interface Vitals {
   unitOfMeasure: string;
 }
 
-export interface VitalsReading {
+export interface VitalReading {
   id: number;
   recordedBy: string;
   patientId: number;
