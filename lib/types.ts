@@ -134,7 +134,7 @@ export interface Address {
 
 export interface Task {
   id: number;
-  taskList: number;
+  taskListId: number;
   createdAt: Date; // x
   title: string; // x
   type: TaskType; // x
@@ -144,7 +144,7 @@ export interface Task {
   finishDate?: Date; // x
   isDone: boolean;
   isArchived: boolean;
-  prerequisiteTaskId?: number; 
+  prerequisiteTaskId: number; 
 
   PrerequisiteTask: Task
 }

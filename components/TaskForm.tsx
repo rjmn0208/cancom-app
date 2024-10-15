@@ -16,6 +16,7 @@ import { Task } from "@/lib/types";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import { Checkbox } from "./ui/checkbox";
+import { useEffect, useState } from "react";
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -23,8 +24,8 @@ const formSchema = z.object({
   description: z.string(),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
   dueDate: z.date(),
-  finishDate: z.date(),
-  isArchived: z.boolean(),
+  finishDate: z.date().optional(),
+  isArchived: z.boolean().optional(),
   prerequisiteTaskId: z.number().nullable()
 })
 
@@ -35,6 +36,8 @@ interface TaskFormProps {
 }
 
 const TaskForm: React.FC<TaskFormProps> = ({task}) => {
+  const [prereqTask, setPreReqTask] = useState<Task[] | null>([])
+
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
     defaultValues:  task ? {
@@ -42,10 +45,10 @@ const TaskForm: React.FC<TaskFormProps> = ({task}) => {
       type: task.type || 'GENERAL',
       description: task.description || '',
       priority: task.priority || 'MEDIUM',
-      dueDate: task.dueDate || new Date(),
-      finishDate: task.finishDate || new Date(),
+      dueDate: task.dueDate ? new Date(task.dueDate) : new Date(),
+      finishDate: task.finishDate ? new Date(task.finishDate) : undefined,
       isArchived: task.isArchived || false,
-      prerequisiteTaskId: task.prerequisiteTaskId || null
+      prerequisiteTaskId: task?.prerequisiteTaskId || null
     } : {
       title: '',
       type: 'GENERAL',
@@ -75,6 +78,20 @@ const TaskForm: React.FC<TaskFormProps> = ({task}) => {
         })  
     }
   }
+
+  const fetchPreReqTasks = async () => {
+    const supabase = createClient()
+    const {data, error} = await supabase
+    .from('Task')
+    .select('*')
+    .eq('taskListId', task?.taskListId)
+
+    setPreReqTask(data)
+  }
+
+  useEffect(() => {
+    fetchPreReqTasks()
+  }, []);
 
   return (
     <Form {...form}>
@@ -256,10 +273,22 @@ const TaskForm: React.FC<TaskFormProps> = ({task}) => {
           name='prerequisiteTaskId'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Prerequisite Task ID:</FormLabel>
-              <FormControl>
-                <Input {...field} type='number' onChange={e => field.onChange(e.target.value ? parseInt(e.target.value) : null)} />
-              </FormControl>
+              <Select 
+                onValueChange={(value) => field.onChange(Number(value))} 
+                defaultValue={field.value?.toString()}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder=""/>
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                {prereqTask?.map((task: Task) => (
+                    <SelectItem key={task.id} value={task.id.toString()}>
+                      {task.title} <p>({task.type})</p>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}

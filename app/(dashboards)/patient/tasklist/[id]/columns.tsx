@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import VitalReadingForm from "@/components/VitalReadingForm"
 import TaskForm from "@/components/TaskForm"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 export const columns: ColumnDef<Task>[] = [
   
@@ -107,39 +108,24 @@ export const columns: ColumnDef<Task>[] = [
       const task = row.original
  
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(String(task.id))}
-            >
-              Copy payment ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant={'outline'}>Edit</Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>  
-                    <DialogTitle>Input Vital Reading Details</DialogTitle>
-                  </DialogHeader>
-                  <TaskForm task={task} />
-                </DialogContent>
-              </Dialog>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Button variant={'destructive'}>Delete</Button>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant={'outline'}>Edit</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>  
+                <DialogTitle>Input Vital Reading Details</DialogTitle>
+              </DialogHeader>
+                <ScrollArea className="w-full rounded-md border max-h-[500px]" >
+                  <div className="p-4">
+                    <TaskForm task={task} />
+                  </div>
+                </ScrollArea>
+            </DialogContent>
+          </Dialog>
+          <Button>Delete Task</Button>
+        </>
       )
     },
   },
