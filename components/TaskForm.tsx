@@ -24,9 +24,9 @@ const formSchema = z.object({
   description: z.string(),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
   dueDate: z.date(),
-  finishDate: z.date().optional(),
-  isArchived: z.boolean().optional(),
-  prerequisiteTaskId: z.number().nullable()
+  finishDate: z.date(),
+  isArchived: z.boolean(),
+  prerequisiteTaskId: z.number()
 })
 
 type FormSchemaType = z.infer<typeof formSchema>;
@@ -41,23 +41,20 @@ const TaskForm: React.FC<TaskFormProps> = ({task}) => {
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
     defaultValues:  task ? {
-      title: task.title || '',
-      type: task.type || 'GENERAL',
-      description: task.description || '',
-      priority: task.priority || 'MEDIUM',
+      title: task.title,
+      type: task.type,
+      description: task.description,
+      priority: task.priority,
       dueDate: task.dueDate ? new Date(task.dueDate) : new Date(),
-      finishDate: task.finishDate ? new Date(task.finishDate) : undefined,
-      isArchived: task.isArchived || false,
-      prerequisiteTaskId: task?.prerequisiteTaskId || null
+      finishDate: task.finishDate ? new Date(task.finishDate) : new Date(),
+      isArchived: task.isArchived,
+      prerequisiteTaskId: task.prerequisiteTaskId
     } : {
       title: '',
-      type: 'GENERAL',
       description: '',
-      priority: 'MEDIUM',
       dueDate: new Date(),
       finishDate: new Date(),
       isArchived: false,
-      prerequisiteTaskId: null
     }
   })
 
