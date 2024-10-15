@@ -66,7 +66,7 @@ const TaskListPage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="flex justify-center">
-          <Button onClick={handleCreateTaskList} disabled={isLoading || taskListId !== null}>
+          <Button onClick={handleCreateTaskList} disabled={isLoading && taskListId == null}>
             Generate Task List
           </Button>
         </CardContent>

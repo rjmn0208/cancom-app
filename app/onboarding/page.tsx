@@ -11,6 +11,7 @@ import { Progress } from "@/components/ui/progress"
 import { UserType } from "@/lib/types"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { createClient } from "@/utils/supabase/client"
 
 export default function OnboardingPage() {
   const [step, setStep] = useState(1)
@@ -21,11 +22,20 @@ export default function OnboardingPage() {
     setUserType(type)
   }
 
+  const refreshSession = async () => {
+    const supabase = createClient()
+    const { error } = await supabase.auth.refreshSession();
+    if (error) {
+      console.error("Error refreshing session:", error.message);
+    }
+  }
+
   const handleNext = () => {
     if (step < 3) {
       setStep(step + 1)
     } else {
       // Handle form submission or navigation to the next page
+      refreshSession()
       router.push(`${userType?.toLocaleLowerCase}`)
     }
   }
