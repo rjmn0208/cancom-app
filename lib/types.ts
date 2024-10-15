@@ -39,7 +39,6 @@ export enum TaskPriority {
 export enum TaskType {
   GENERAL = "GENERAL",
   MEDICATION = "MEDICATION",
-  JOURNAL = "JOURNAL",
   EXERCISE = "EXERCISE",
   APPOINTMENT = "APPOINTMENT",
 }
@@ -145,7 +144,7 @@ export interface Task {
   finishDate?: Date; // x
   isDone: boolean;
   isArchived: boolean;
-  prerequisiteTaskId?: number; // assuming this can be optional
+  prerequisiteTaskId?: number; 
 
   PrerequisiteTask: Task
 }

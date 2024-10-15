@@ -15,29 +15,28 @@ import { MoreHorizontal } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Task, TaskType } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import VitalReadingForm from "@/components/VitalReadingForm"
+import TaskForm from "@/components/TaskForm"
 
 export const columns: ColumnDef<Task>[] = [
+  
   {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
+    accessorKey: "title",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Title
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      )
+    },
+    cell: ({ row }) => {
+      return <div className="font-bold">{row.getValue("title")}</div>
+    },
   },
   {
     accessorKey: "createdAt",
@@ -55,23 +54,6 @@ export const columns: ColumnDef<Task>[] = [
     cell: ({ row }) => {
       const createdAt: Date = row.getValue("createdAt")
       return <div>{createdAt.toLocaleString()}</div>
-    },
-  },
-  {
-    accessorKey: "title",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Title
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
-    cell: ({ row }) => {
-      return <div>{row.getValue("title")}</div>
     },
   },
   {
@@ -140,8 +122,22 @@ export const columns: ColumnDef<Task>[] = [
               Copy payment ID
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>View customer</DropdownMenuItem>
-            <DropdownMenuItem>View payment details</DropdownMenuItem>
+            <DropdownMenuItem>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant={'outline'}>Edit</Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>  
+                    <DialogTitle>Input Vital Reading Details</DialogTitle>
+                  </DialogHeader>
+                  <TaskForm task={task} />
+                </DialogContent>
+              </Dialog>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Button variant={'destructive'}>Delete</Button>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
