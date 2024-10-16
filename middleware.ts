@@ -9,7 +9,6 @@ export async function middleware(request: NextRequest) {
   const {supabase, response} = await createClient(request)
   const { data: { user }, error } = await supabase.auth.getUser();
   const currentPath = request.nextUrl.pathname
-
   const PROTECTED_PATHS_PREFIX = {
     PATIENT: '/patient',
     CARETAKER: '/caretaker',
@@ -29,13 +28,18 @@ export async function middleware(request: NextRequest) {
   if (!user && inProtectedPath) {
     return NextResponse.redirect(new URL("/sign-in", request.url));
   }
-  
+
   if(user){
     const userType = await getUserTypeFromAccessToken()
+    console.log(userType)
     
-    if(!userType){
-      return NextResponse.redirect(new URL('/onboarding', request.url))
+    if(userType === null){
+      if (currentPath !== "/onboarding") {
+        return NextResponse.redirect(new URL("/onboarding", request.url));
+      }
+      return response;
     }
+
     if(isAllowedPath(userType, currentPath)){
       return response
     }

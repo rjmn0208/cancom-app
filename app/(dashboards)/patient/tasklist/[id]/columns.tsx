@@ -115,7 +115,7 @@ export const columns: ColumnDef<Task>[] = [
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>  
-                <DialogTitle>Input Vital Reading Details</DialogTitle>
+                <DialogTitle>Edit Task</DialogTitle>
               </DialogHeader>
                 <ScrollArea className="w-full rounded-md border max-h-[500px]" >
                   <div className="p-4">
