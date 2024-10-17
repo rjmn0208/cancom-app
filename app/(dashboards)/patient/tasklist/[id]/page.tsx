@@ -19,21 +19,7 @@ export default async function TaskListPage({params}: {params: {id: string}}) {
 
   return (
     <div className="container mx-auto py-10">
-      <Dialog>
-          <DialogTrigger asChild>
-            <Button>Add Vital Reading</Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>  
-              <DialogTitle>Input Vital Reading Details</DialogTitle>
-            </DialogHeader>
-            <ScrollArea className="w-full rounded-md border max-h-[500px]" >
-              <div className="p-4">
-                <TaskForm  />
-              </div>
-            </ScrollArea>
-          </DialogContent>
-        </Dialog>
+      
       <DataTable columns={columns} data={taskData as Task[]}/> 
     </div>
   )

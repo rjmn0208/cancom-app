@@ -38,7 +38,8 @@ export default function OnboardingPage() {
       refreshSession()
       router.push(`${userType?.toLocaleLowerCase}`)
     }
-  }
+  } 
+
 
   const handleBack = () => {
     if (step > 1) {
