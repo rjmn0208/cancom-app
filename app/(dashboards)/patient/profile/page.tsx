@@ -194,7 +194,16 @@ export default function ProfilePage() {
                     </div>
                     <div className="space-y-2">
                       <div className="text-sm font-medium text-muted-foreground">Diagnosis Date</div>
-                      <div>{new Date(patient.diagnosisDate).toLocaleDateString()}</div>
+                      <div>
+                        {new Date(patient.diagnosisDate).toLocaleString(undefined, {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: true
+                        })}
+                    </div>
                     </div>
                   </div>
                 </div>

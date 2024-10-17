@@ -66,7 +66,14 @@ export default function JournalPage() {
           </CardHeader>
           <CardContent>
           <p className="text-sm text-muted-foreground mb-2">
-              {new Date(journal.createdAt).toDateString()} - <Badge>Mood: {journal.mood}</Badge>
+              {new Date(journal.createdAt).toLocaleString(undefined, {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: true
+                        })} - <Badge>Mood: {journal.mood}</Badge>
             </p>
             <p>{journal.content}</p>
           </CardContent>

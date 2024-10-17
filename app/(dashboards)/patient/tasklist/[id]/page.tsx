@@ -1,26 +1,57 @@
-import { Task, TaskPriority, TaskType } from "@/lib/types";
-import { columns } from "./columns"
-import { DataTable } from "./data-table"
-import { createClient } from "@/utils/supabase/server";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+'use client'
+
+import { Task } from "@/lib/types";
+import { createClient } from "@/utils/supabase/client"
+import { useEffect, useState } from "react";
+import { DataTable } from "./data-table";
+import { columns } from "./columns";
 import TaskForm from "@/components/TaskForm";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 
+const TaskListPage = ({params}: {params: {id: string}}) => {
+  const [tasks, setTasks] = useState<Task[] | null>()
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false)
 
-export default async function TaskListPage({params}: {params: {id: string}}) {
+  const taskListId = Number(params.id)
   const supabase = createClient()
   
-  const {data: taskData, error: taskError}= await supabase
-  .from('Task')
-  .select('*')
-  .eq('taskListId', params.id)
+  
+  const fetchTasks = async() => {
+    const {data, error} = await supabase
+    .from('Task')
+    .select('*')
+    .eq('taskListId', taskListId)
+
+    if(!error){
+      setTasks(data)
+    }
+  }
+
+  useEffect(() => {
+    fetchTasks()
+  },[])
+
 
   return (
     <div className="container mx-auto py-10">
+      <Dialog>
+        <DialogTrigger>
+          <Button>Add Task</Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Input Task Details</DialogTitle>
+            <TaskForm />
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+
       
-      <DataTable columns={columns} data={taskData as Task[]}/> 
+      <DataTable columns={columns} data={tasks || []}/> 
     </div>
   )
 }
+
+export default TaskListPage
