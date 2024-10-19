@@ -3,26 +3,25 @@
 import { ColumnDef } from "@tanstack/react-table"
 import { ArrowUpDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { MoreHorizontal } from "lucide-react"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Task, TaskType } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import VitalReadingForm from "@/components/VitalReadingForm"
 import TaskForm from "@/components/TaskForm"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { createClient } from "@/utils/supabase/client"
+
+
+const handleDelete = async (task: Task) => {
+  const supabase = createClient()
+  const {data, error} = await supabase
+  .from('Task')
+  .delete()
+  .eq('id', task.id)
+}
 
 export const columns: ColumnDef<Task>[] = [
   
-  {
+  { 
     accessorKey: "title",
     header: ({ column }) => {
       return (
@@ -38,7 +37,7 @@ export const columns: ColumnDef<Task>[] = [
     cell: ({ row }) => {
       return <div className="font-bold">{row.getValue("title")}</div>
     },
-  },
+   },
   {
     accessorKey: "createdAt",
     header: ({ column }) => {
@@ -124,7 +123,7 @@ export const columns: ColumnDef<Task>[] = [
                 </ScrollArea>
             </DialogContent>
           </Dialog>
-          <Button>Delete Task</Button>
+          <Button onClick={() => {handleDelete(task)}}>Delete Task</Button>
         </>
       )
     },

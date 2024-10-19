@@ -8,13 +8,14 @@ import { columns } from "./columns";
 import TaskForm from "@/components/TaskForm";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import AppointmentTaskForm from "@/components/AppointmentTaskForm";
 
 
 const TaskListPage = ({params}: {params: {id: string}}) => {
   const [tasks, setTasks] = useState<Task[] | null>()
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false)
-
   const taskListId = Number(params.id)
+  
   const supabase = createClient()
   
   
@@ -37,19 +38,20 @@ const TaskListPage = ({params}: {params: {id: string}}) => {
   return (
     <div className="container mx-auto py-10">
       <Dialog>
-        <DialogTrigger>
+        <DialogTrigger asChild>
           <Button>Add Task</Button>
         </DialogTrigger>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Input Task Details</DialogTitle>
-            <TaskForm />
+            <TaskForm taskListId={taskListId}/>
           </DialogHeader>
         </DialogContent>
       </Dialog>
 
       
       <DataTable columns={columns} data={tasks || []}/> 
+      <AppointmentTaskForm/>
     </div>
   )
 }

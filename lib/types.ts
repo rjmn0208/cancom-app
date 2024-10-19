@@ -144,9 +144,9 @@ export interface Task {
   finishDate?: Date; // x
   isDone: boolean;
   isArchived: boolean;
-  prerequisiteTaskId: number; 
+  prerequisiteTaskId?: number; 
 
-  PrerequisiteTask: Task
+  PrerequisiteTask?: Task
 }
 
 export interface AppointmentTask {

@@ -5,11 +5,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Button } from "./ui/button";
-import { cn } from "@/lib/utils";
-import { CalendarIcon } from "lucide-react";
-import { Calendar } from "@/components/ui/calendar"
 import { format } from "date-fns";
 import { createClient } from "@/utils/supabase/client";
 import { Task } from "@/lib/types";
@@ -26,21 +22,19 @@ const formSchema = z.object({
   dueDate: z.date(),
   finishDate: z.date(),
   isArchived: z.boolean(),
-  prerequisiteTaskId: z.number()
+  prerequisiteTaskId: z.number().nullable()
 })
 
 type FormSchemaType = z.infer<typeof formSchema>;
 
 interface TaskFormProps {
-  task?: Partial<Task>
+  task?: Partial<Task>,
+  taskListId?: number
 }
 
-const TaskForm: React.FC<TaskFormProps> = ({task}) => {
+const TaskForm: React.FC<TaskFormProps> = ({ task, taskListId }) => {
   const [prereqTask, setPreReqTask] = useState<Task[] | null>([])
-  /*
-    /patient/tasklist/[id]
-    
-  */
+
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
     defaultValues:  task ? {
@@ -58,6 +52,7 @@ const TaskForm: React.FC<TaskFormProps> = ({task}) => {
       dueDate: new Date(),
       finishDate: new Date(),
       isArchived: false,
+      prerequisiteTaskId: null,  
     }
   })
 
@@ -74,8 +69,8 @@ const TaskForm: React.FC<TaskFormProps> = ({task}) => {
         .from('Task')
         .insert({
           ...values,
-          userId: user?.id
-        })  
+          taskListId: taskListId
+        })
     }
   }
 
@@ -84,7 +79,7 @@ const TaskForm: React.FC<TaskFormProps> = ({task}) => {
     const {data, error} = await supabase
     .from('Task')
     .select('*')
-    .eq('taskListId', task?.taskListId)
+    .eq('taskListId', taskListId)
 
     setPreReqTask(data)
   }
@@ -238,15 +233,16 @@ const TaskForm: React.FC<TaskFormProps> = ({task}) => {
           render={({ field }) => (
             <FormItem>
               <Select 
-                onValueChange={(value) => field.onChange(Number(value))} 
-                defaultValue={field.value?.toString()}>
+                onValueChange={(value) => field.onChange(value ? Number(value) : null)}
+                defaultValue={field.value?.toString() || ""}
+              >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder=""/>
+                    <SelectValue placeholder="Select prerequisite task" />                  
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                {prereqTask?.map((task: Task) => (
+                  {prereqTask?.map((task: Task) => (
                     <SelectItem key={task.id} value={task.id.toString()}>
                       {task.title} <p>({task.type})</p>
                     </SelectItem>
