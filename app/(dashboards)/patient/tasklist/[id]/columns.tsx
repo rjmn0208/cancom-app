@@ -1,7 +1,7 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { ArrowUpDown } from "lucide-react"
+import { ArrowUpDown, Ellipsis, MoreHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Task, TaskType } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
@@ -9,6 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import TaskForm from "@/components/TaskForm"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { createClient } from "@/utils/supabase/client"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 
 
 const handleDelete = async (task: Task) => {
@@ -100,7 +102,19 @@ export const columns: ColumnDef<Task>[] = [
       return <div>{dueDate.toLocaleString()}</div>
     },
   },
- 
+  {
+    accessorKey: "isArchived",
+    header: 'Archived?',
+    cell: ({ row }) => {
+      const isArchived: boolean = row.getValue('isArchived')
+      return (
+        <Badge variant={'outline'}>
+          {(isArchived)? 'TRUE': 'FALSE'}
+        </Badge>
+      )
+
+    },
+  },
   {
     id: "actions",
     cell: ({ row }) => {
@@ -108,22 +122,48 @@ export const columns: ColumnDef<Task>[] = [
  
       return (
         <>
+          <Sheet>
+              <SheetTrigger>
+                <Button variant={'outline'}>Edit</Button>
+              </SheetTrigger>
+              <SheetContent>
+                <SheetHeader>
+                  <SheetTitle>Input Task Details</SheetTitle>
+                </SheetHeader>
+                <TaskForm task={task} />
+              </SheetContent>
+            </Sheet>
+          <Button 
+            variant={'destructive'} 
+            onClick={() => {handleDelete(task)}}>
+              Delete Task
+          </Button>
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant={'outline'}>Edit</Button>
+              <Button variant="outline">
+                <Ellipsis/>
+              </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>  
-                <DialogTitle>Edit Task</DialogTitle>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{task.title}</DialogTitle>
               </DialogHeader>
-                <ScrollArea className="w-full rounded-md border max-h-[500px]" >
-                  <div className="p-4">
-                    <TaskForm task={task} />
-                  </div>
-                </ScrollArea>
+              <div className="mt-4">
+                <h4 className="text-sm font-medium">Created By: </h4>
+                <p className="mt-1 text-sm text-gray-500">{task.CreatedBy.firstName} {task.CreatedBy.middleName} {task.CreatedBy.lastName}</p>
+
+                <h4 className="text-sm font-medium">Description: </h4>
+                <p className="mt-1 text-sm text-gray-500">{task.description}</p>
+
+                <h4 className="text-sm font-medium">Finish Date: </h4>
+                  <p className="mt-1 text-sm text-gray-500">
+                    {task.finishDate 
+                      ? new Date(task.finishDate).toLocaleDateString() 
+                      : 'Not set'}
+                  </p>
+              </div>
             </DialogContent>
           </Dialog>
-          <Button onClick={() => {handleDelete(task)}}>Delete Task</Button>
         </>
       )
     },

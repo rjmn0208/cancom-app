@@ -116,7 +116,7 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({vitalReading}) => {
                 defaultValue={field.value.toString()}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder=""/>
+                    <SelectValue placeholder="Patient"/>
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>

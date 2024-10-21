@@ -138,14 +138,16 @@ export interface Task {
   createdAt: Date; // x
   title: string; // x
   type: TaskType; // x
-  description?: string; 
+  description?: string; // /
   priority: TaskPriority; // x
   dueDate?: Date; // x
-  finishDate?: Date; // x
-  isDone: boolean;
-  isArchived: boolean;
+  finishDate?: Date; // /
+  isDone: boolean; // /
+  isArchived: boolean; // x
   prerequisiteTaskId?: number; 
+  createdBy: string; // /
 
+  CreatedBy: User
   PrerequisiteTask?: Task
 }
 
@@ -156,12 +158,16 @@ export interface AppointmentTask {
   appointmentDate: Date; // ISO format for date
   purpose: string;
   doctorsNotes?: string; // assuming this can be optional
+
+  Task: Task
 }
 
 export interface ExerciseTask {
   id: number;
   taskId: number;
-  duration: string; 
+  duration: string;
+  
+  Task: Task
 }
 
 export interface MedicationTask {
@@ -171,6 +177,8 @@ export interface MedicationTask {
   startDate: Date; // ISO format for date
   endDate: Date; // ISO format for date
   instructions?: string; // assuming this can be optional
+
+  Task: Task
 }
 
 export interface TaskList {

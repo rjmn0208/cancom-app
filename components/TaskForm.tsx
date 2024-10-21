@@ -20,9 +20,8 @@ const formSchema = z.object({
   description: z.string(),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
   dueDate: z.date(),
-  finishDate: z.date(),
   isArchived: z.boolean(),
-  prerequisiteTaskId: z.number().nullable()
+  prerequisiteTaskId: z.number().nullable(),
 })
 
 type FormSchemaType = z.infer<typeof formSchema>;
@@ -37,20 +36,18 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, taskListId }) => {
 
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
-    defaultValues:  task ? {
+    defaultValues:  task 
+    ? {
       title: task.title,
       type: task.type,
       description: task.description,
       priority: task.priority,
-      dueDate: task.dueDate ? new Date(task.dueDate) : new Date(),
-      finishDate: task.finishDate ? new Date(task.finishDate) : new Date(),
+      dueDate: task.dueDate,
       isArchived: task.isArchived,
-      prerequisiteTaskId: task.prerequisiteTaskId
+      prerequisiteTaskId: task.prerequisiteTaskId,
     } : {
       title: '',
       description: '',
-      dueDate: new Date(),
-      finishDate: new Date(),
       isArchived: false,
       prerequisiteTaskId: null,  
     }
@@ -69,7 +66,8 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, taskListId }) => {
         .from('Task')
         .insert({
           ...values,
-          taskListId: taskListId
+          taskListId: taskListId,
+          createdBy: user?.id
         })
     }
   }
@@ -181,26 +179,6 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, taskListId }) => {
                       }}
                     />
                 </FormControl>  
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="finishDate"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>Finish Date:</FormLabel>
-                <FormControl>
-                  <Input 
-                      type="datetime-local"  
-                      {...field}
-                      value={field.value ? format(new Date(field.value), 'yyyy-MM-dd\'T\'HH:mm') : ''}
-                      onChange={(e) => {
-                        field.onChange(new Date(e.target.value))
-                      }}
-                    />
-                </FormControl>
               <FormMessage />
             </FormItem>
           )}

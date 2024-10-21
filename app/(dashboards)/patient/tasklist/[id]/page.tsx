@@ -22,7 +22,7 @@ const TaskListPage = ({params}: {params: {id: string}}) => {
   const fetchTasks = async() => {
     const {data, error} = await supabase
     .from('Task')
-    .select('*')
+    .select('*, CreatedBy: User(*)')
     .eq('taskListId', taskListId)
 
     if(!error){
@@ -51,6 +51,7 @@ const TaskListPage = ({params}: {params: {id: string}}) => {
 
       
       <DataTable columns={columns} data={tasks || []}/> 
+      
       <AppointmentTaskForm/>
     </div>
   )
