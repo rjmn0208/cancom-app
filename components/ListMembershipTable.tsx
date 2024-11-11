@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table'
 import { createClient } from '@/utils/supabase/client'
-import { ListMembership } from '@/lib/types'
+import { ListMembership, ListPermission } from '@/lib/types'
 import { Badge } from './ui/badge'
 import ListMemberForm from './ListMemberForm'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog'
@@ -14,7 +14,7 @@ interface ListMembershipTableProps {
 
 const ListMembershipTable: React.FC<ListMembershipTableProps> = ({taskListId}) => {
   const [listMembers, setListMembers] = useState<ListMembership[]>([])
-
+  const [permission, setPermission] = useState<ListPermission>()
   const fetchTaskListMembers = async() => {
     const supabase = createClient()
 
@@ -24,6 +24,18 @@ const ListMembershipTable: React.FC<ListMembershipTableProps> = ({taskListId}) =
     .eq('taskListId', taskListId)
 
     if(!error) setListMembers(data)
+  }
+
+  const fetchPermission = async () => {
+    const supabase = createClient()
+    const {data: {user}} = await supabase.auth.getUser()
+    const {data, error} = await supabase
+      .from('ListMembership')
+      .select('permission')
+      .eq('userId', user?.id)
+      .single()
+
+    if(!error) setPermission(data.permission)
   }
 
   const handleDelete = async (listMember: ListMembership) => {
@@ -40,8 +52,13 @@ const ListMembershipTable: React.FC<ListMembershipTableProps> = ({taskListId}) =
     if(!open) fetchTaskListMembers()
   }
 
+  const isListManager = () => {
+    return permission === ListPermission.MANAGER
+  }
+
   useEffect(() => {
     fetchTaskListMembers()
+    fetchPermission()
   }, [])
   
 
@@ -89,18 +106,22 @@ const ListMembershipTable: React.FC<ListMembershipTableProps> = ({taskListId}) =
                           hour12: true
                         })}</TableCell>
               <TableCell>
-              <Dialog onOpenChange={handleOpenChange}>
-                <DialogTrigger asChild>
-                  <Button variant={'outline'}>Edit</Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>  
-                    <DialogTitle>Input Vital Reading Details</DialogTitle>
-                  </DialogHeader>
-                  <ListMemberForm listMember={listMember}/>
-                </DialogContent>
-              </Dialog>
-              <Button variant={'destructive'} className='mt-2' onClick={() => handleDelete(listMember)}>Delete</Button>
+                {isListManager() ? 
+                <div>
+                  <Dialog onOpenChange={handleOpenChange}>
+                    <DialogTrigger asChild>
+                      <Button variant={'outline'}>Edit</Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                      <DialogHeader>  
+                        <DialogTitle>Input Vital Reading Details</DialogTitle>
+                      </DialogHeader>
+                      <ListMemberForm listMember={listMember}/>
+                    </DialogContent>
+                  </Dialog>
+                  <Button variant={'destructive'} className='mt-2' onClick={() => handleDelete(listMember)}>Delete</Button>
+                </div>
+                : <></>}
               </TableCell>
 
             </TableRow>

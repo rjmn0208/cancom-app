@@ -136,7 +136,7 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) =>  {
     }
   }
 
-  const isListManager = async () => {
+  const isListManager = () => {
     return permission === ListPermission.MANAGER
   }
 
@@ -168,42 +168,44 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) =>  {
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center space-x-4">
           <h1 className="text-2xl font-bold">Dashboard</h1>
-          
-          <Dialog onOpenChange={handleOpenChange}>
-            <DialogTrigger asChild>
-              <Button disabled={!!isListManager} >Add Task</Button>
-            </DialogTrigger>
-            <DialogContent className="h-4/5 overflow-y-auto w-11/12">
-              <DialogHeader>
-                <DialogTitle>Add New Task</DialogTitle>
-                <DialogDescription>Choose a task type and fill in the details.</DialogDescription>
-              </DialogHeader>
-              <div className="space-y-6 py-4">
-                <div className="space-y-4">
-                  <Label>Choose Task Type</Label>
-                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                    {Object.values(TaskType).map((type) => (
-                      <Button
-                        key={type}
-                        variant={addTaskType === type ? 'default' : 'outline'}
-                        onClick={() => setAddTaskType(type)}
-                        className="w-full"
-                      >
-                        {type.charAt(0) + type.slice(1).toLowerCase()}
-                      </Button>
-                    ))}
+          {isListManager() && (
+            <Dialog onOpenChange={handleOpenChange}>
+              <DialogTrigger asChild>
+                <Button>Add Task</Button>
+              </DialogTrigger>
+              <DialogContent className="h-4/5 overflow-y-auto w-11/12">
+                <DialogHeader>
+                  <DialogTitle>Add New Task</DialogTitle>
+                  <DialogDescription>Choose a task type and fill in the details.</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-6 py-4">
+                  <div className="space-y-4">
+                    <Label>Choose Task Type</Label>
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                      {Object.values(TaskType).map((type) => (
+                        <Button
+                          key={type}
+                          variant={addTaskType === type ? 'default' : 'outline'}
+                          onClick={() => setAddTaskType(type)}
+                          className="w-full"
+                        >
+                          {type.charAt(0) + type.slice(1).toLowerCase()}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
+                  <Separator />
+                  {addTaskType === TaskType.GENERAL && <GeneralTaskForm taskListId={taskListId} />}
+                  {addTaskType === TaskType.APPOINTMENT && <AppointmentTaskForm taskListId={taskListId} />}
+                  {addTaskType === TaskType.MEDICATION && <MedicationTaskForm taskListId={taskListId} />}
+                  {addTaskType === TaskType.TREATMENT && <TreatmentTaskForm taskListId={taskListId} />}
+                  {addTaskType === TaskType.EXERCISE && <ExerciseTaskForm taskListId={taskListId} />}
+                  
                 </div>
-                <Separator />
-                {addTaskType === TaskType.GENERAL && <GeneralTaskForm taskListId={taskListId} />}
-                {addTaskType === TaskType.APPOINTMENT && <AppointmentTaskForm taskListId={taskListId} />}
-                {addTaskType === TaskType.MEDICATION && <MedicationTaskForm taskListId={taskListId} />}
-                {addTaskType === TaskType.TREATMENT && <TreatmentTaskForm taskListId={taskListId} />}
-                {addTaskType === TaskType.EXERCISE && <ExerciseTaskForm taskListId={taskListId} />}
-                
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogContent>
+            </Dialog>
+          )}
+    
 
           <Sheet onOpenChange={handleOpenChange}>
             <SheetTrigger asChild>
@@ -264,9 +266,10 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) =>  {
             </DialogContent>
           </Dialog>
         </div>
+        {isListManager() && (
           <Dialog onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
-            <Button disabled={!!isListManager} variant="outline">
+            <Button variant="outline">
               <User className="mr-2 h-4 w-4" />
               Invite to Task List
             </Button>
@@ -280,6 +283,7 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) =>  {
               </div>
             </DialogContent>
           </Dialog>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 h-[calc(100vh-120px)]">
