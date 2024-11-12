@@ -1,15 +1,18 @@
-import React from 'react'
-import { Task, TaskType, TaskPriority, MedicationTask, } from '@/lib/types'
+'use client'
+
+import React, { useEffect, useState } from 'react'
+import { Task, TaskType, TaskPriority, MedicationTask } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { CalendarIcon, CheckCircleIcon, ClockIcon, UserIcon, Trash2Icon, UndoIcon, Pill, Stethoscope, Dumbbell, Syringe, EditIcon } from 'lucide-react'
+import { CalendarIcon, CheckCircleIcon, ClockIcon, UserIcon, Trash2Icon, UndoIcon, Pill, Stethoscope, Dumbbell, Syringe, EditIcon, Ellipsis } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog'
 import AppointmentTaskForm from './AppointmentTaskForm'
 import MedicationTaskForm from './MedicationTaskForm'
 import TreatmentTaskForm from './TreatmentTaskForm'
 import ExerciseTaskForm from './ExerciseTaskForm'
 import GeneralTaskForm from './GeneralTaskForm'
+import { createClient } from '@/utils/supabase/client'
 
 interface TaskCardProps {
   task: Task
@@ -20,7 +23,10 @@ interface TaskCardProps {
   isCompleted?: boolean
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({ task, onDelete, onComplete, onUndoComplete, onOpenChange, isCompleted = false }) => {
+export default function TaskCard({ task, onDelete, onComplete, onUndoComplete, onOpenChange, isCompleted = false }: TaskCardProps) {
+  const [subTasks, setSubTasks] = useState<Task[]>([])
+  const [prerequisites, setPrerequisites] = useState<Task[]>([])
+
   const handleAction = (action: 'delete' | 'complete' | 'undoComplete') => {
     switch (action) {
       case 'delete':
@@ -37,31 +43,27 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDelete, onComplete, onUndoC
   }
 
   const getMedicineColor = (medicineColor: string) => {
-    // Split the color string and handle each part
-    const colors = medicineColor.split('/').map(color => color.trim().toLowerCase());
-    
-    // Join colors into a linear gradient if there are multiple
+    const colors = medicineColor.split('/').map(color => color.trim().toLowerCase())
     const background = colors.length > 1 
       ? `linear-gradient(90deg, ${colors.join(', ')})` 
-      : colors[0];
-  
-    return { background };
-  };
+      : colors[0]
+    return { background }
+  }
 
   const getPriorityColor = (priority: TaskPriority) => {
     switch (priority) {
       case 'LOW':
-        return 'bg-green-500 text-black';
+        return 'bg-green-500 text-black'
       case 'MEDIUM':
-        return 'bg-yellow-500 text-black';
+        return 'bg-yellow-500 text-black'
       case 'HIGH':
-        return 'bg-orange-500 text-black';
+        return 'bg-orange-500 text-black'
       case 'CRITICAL':
-        return 'bg-red-500 text-black';
+        return 'bg-red-500 text-black'
       default:
-        return 'bg-gray-500 text-black';
+        return 'bg-gray-500 text-black'
     }
-  };
+  }
 
   const renderTaskTypeDetails = () => {
     switch (task.type) {
@@ -80,13 +82,13 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDelete, onComplete, onUndoC
               }
             </p>
             <p className="text-sm opacity-70">Date: {new Date(task.AppointmentTask[0].appointmentDate).toLocaleString(undefined, {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          hour12: true
-                        })}</p>
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true
+            })}</p>
             <p className="text-sm opacity-70">Purpose: {task.AppointmentTask[0].purpose}</p>
             {task.AppointmentTask[0].doctorsNotes && <p className="text-sm opacity-70">Notes: {task.AppointmentTask[0].doctorsNotes}</p>}
           </div>
@@ -119,21 +121,21 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDelete, onComplete, onUndoC
             </div>
             <p className="text-sm opacity-70">Dosage: {task.MedicationTask[0].dosage} mg</p>
             <p className="text-sm opacity-70">Period: {new Date(task.MedicationTask[0].startDate).toLocaleString(undefined, {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          hour12: true
-                        })} - {new Date(task.MedicationTask[0].endDate).toLocaleString(undefined, {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          hour12: true
-                        })}</p>
-            <p  className="text-sm opacity-70" >Cron Job: {task.MedicationTask[0].cronExpression}</p>
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true
+            })} - {new Date(task.MedicationTask[0].endDate).toLocaleString(undefined, {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true
+            })}</p>
+            <p className="text-sm opacity-70">Cron Job: {task.MedicationTask[0].cronExpression}</p>
             {task.MedicationTask[0].instructions && <p className="text-sm opacity-70">Instructions: {task.MedicationTask[0].instructions}</p>}
           </div>
         )
@@ -146,13 +148,13 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDelete, onComplete, onUndoC
             </p>
             <p className="text-sm opacity-70">Type: {task.TreatmentTask[0].treatmentType}</p>
             <p className="text-sm opacity-70">Date: {new Date(task.TreatmentTask[0].date).toLocaleString(undefined, {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          hour12: true
-                        })}</p>
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true
+            })}</p>
             {task.TreatmentTask[0].dosage && <p className="text-sm opacity-70">Dosage: {task.TreatmentTask[0].dosage} Units</p>}
           </div>
         )
@@ -160,6 +162,29 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDelete, onComplete, onUndoC
         return null
     }
   }
+
+  const fetchSubTasks = async () => {
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('Task')
+      .select('*')
+      .eq('parentTaskId', task.id)
+    if (!error) setSubTasks(data)
+  }
+
+  const fetchPreReqTasks = async () => {
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('Task')
+      .select('*')
+      .eq('id', task.prerequisiteTaskId)
+    if (!error) setPrerequisites(data)
+  }
+
+  useEffect(() => {
+    fetchSubTasks()
+    fetchPreReqTasks()
+  }, [])
 
   return (
     <Card className={`w-full ${task.isArchived ? 'opacity-50' : ''}`}>
@@ -174,13 +199,13 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDelete, onComplete, onUndoC
           <div className="flex items-center space-x-2">
             <CalendarIcon className="w-4 h-4" />
             <span>Created: {new Date(task.createdAt).toLocaleString(undefined, {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          hour12: true
-                        })}</span>
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true
+            })}</span>
           </div>
         </CardDescription>
       </CardHeader>
@@ -191,13 +216,13 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDelete, onComplete, onUndoC
             <div className="flex items-center space-x-2">
               <ClockIcon className="w-4 h-4" />
               <span className="text-sm">Due: {new Date(task.dueDate).toLocaleString(undefined, {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          hour12: true
-                        })}</span>
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+              })}</span>
             </div>
           )}
           {task.taskCreator && (
@@ -212,43 +237,81 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDelete, onComplete, onUndoC
       <CardFooter className="flex justify-end space-x-2">
         {isCompleted && task.finishDate ? (
           <>
-          <p className="text-sm font-bold" >
+            <p className="text-sm font-bold">
               Date Completed: {new Date(task.finishDate).toLocaleString(undefined, {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          hour12: true
-                        })}
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+              })}
             </p>
             <Button variant="outline" onClick={() => handleAction('undoComplete')}>
               <UndoIcon className="w-4 h-4" />
             </Button>
             <Button variant="destructive" onClick={() => handleAction('delete')}>
-              <Trash2Icon className="w-4 h-4 " />
+              <Trash2Icon className="w-4 h-4" />
             </Button>
           </>
         ) : (
           <>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant='ghost' size='icon'>
+                  <Ellipsis className="w-4 h-4" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Task Details</DialogTitle>
+                  <DialogDescription>                    
+                    View prerequisites and subtasks for this task.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="mt-4 space-y-4">
+                  {prerequisites.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold mb-2">Prerequisites:</h3>
+                      <ul className="list-disc list-inside">
+                        {prerequisites.map(prereq => (
+                          <li key={prereq.id} className="text-sm">{prereq.title}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {subTasks.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold mb-2">Subtasks:</h3>
+                      <ul className="list-disc list-inside">
+                        {subTasks.map(subTask => (
+                          <li key={subTask.id} className="text-sm">{subTask.title}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
+
             <Dialog onOpenChange={onOpenChange}>
               <DialogTrigger asChild>
-                  <Button variant="outline">
+                <Button variant="outline">
                   <EditIcon className="w-4 h-4" />
                 </Button>
               </DialogTrigger>
               <DialogContent className="h-4/5 overflow-y-auto w-11/12">
                 <DialogHeader>
                   <DialogTitle className='text-lg'>
-                    Now editting task titled <p className='italic'>"{task.title}"</p>
+                    Now editing task titled <p className='italic'>"{task.title}"</p>
                   </DialogTitle>
                   <DialogDescription>Fill in the necessary details</DialogDescription>
                 </DialogHeader>
-                  {task.type === TaskType.GENERAL && <GeneralTaskForm task={task} />}
-                  {task.type === TaskType.APPOINTMENT && <AppointmentTaskForm appointmentTask={{...task, ...task.AppointmentTask[0]}} />}
-                  {task.type === TaskType.MEDICATION && <MedicationTaskForm medicationTask={{ ...task, ...task.MedicationTask[0] }} />}                  
-                  {task.type === TaskType.EXERCISE && <ExerciseTaskForm exerciseTask={{...task, ...task.ExerciseTask[0]}} />}
-                  {task.type === TaskType.TREATMENT && <TreatmentTaskForm treatmentTask={{...task, ...task.TreatmentTask[0]}}/>}
+                {task.type === TaskType.GENERAL && <GeneralTaskForm task={task} />}
+                {task.type === TaskType.APPOINTMENT && <AppointmentTaskForm appointmentTask={{...task, ...task.AppointmentTask[0]}} />}
+                {task.type === TaskType.MEDICATION && <MedicationTaskForm medicationTask={{ ...task, ...task.MedicationTask[0] }} />}                  
+                {task.type === TaskType.EXERCISE && <ExerciseTaskForm exerciseTask={{...task, ...task.ExerciseTask[0]}} />}
+                {task.type === TaskType.TREATMENT && <TreatmentTaskForm treatmentTask={{...task, ...task.TreatmentTask[0]}}/>}
               </DialogContent>
             </Dialog>
             <Button variant="outline" onClick={() => handleAction('complete')}>
@@ -263,5 +326,3 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDelete, onComplete, onUndoC
     </Card>
   )
 }
-
-export default TaskCard

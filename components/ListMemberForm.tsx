@@ -52,9 +52,12 @@ const ListMemberForm: React.FC<ListMembershipFormProps> = ({listMember, taskList
 
   const fetchUsers = async () => {
     const supabase = createClient();
+    const {data: {user}} = await supabase.auth.getUser()
+
     const {data, error} = await supabase
     .from('User')
     .select('*')
+    .neq('id', user?.id)
 
     if(!error) {
       setUsers(data);

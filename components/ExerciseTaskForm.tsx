@@ -2,7 +2,7 @@
 
 import { ExerciseTask, Task, TaskType } from "@/lib/types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "./ui/form";
@@ -22,7 +22,7 @@ const formSchema = z.object({
   isArchived: z.boolean(),
   dueDate: z.date().nullable(),
   prerequisiteTaskId: z.number().nullable(),
-  subTaskId: z.number().nullable(),
+  parentTaskId: z.number().nullable(),
 
   //exercise task fields
   name: z.string(),
@@ -42,7 +42,7 @@ interface ExerciseTaskFormProps {
 
 const ExerciseTaskForm: React.FC<ExerciseTaskFormProps> = ({exerciseTask, taskListId}) => {
   const [tasks, setTasks] = useState<Task[]>([])
-  
+
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
     defaultValues:  exerciseTask 
@@ -53,7 +53,7 @@ const ExerciseTaskForm: React.FC<ExerciseTaskFormProps> = ({exerciseTask, taskLi
       isDone: exerciseTask.isDone,
       isArchived: exerciseTask.isArchived,
       prerequisiteTaskId: exerciseTask.prerequisiteTaskId,
-      subTaskId: exerciseTask.subTaskId,
+      parentTaskId: exerciseTask.parentTaskId,
       dueDate: (exerciseTask.dueDate) ? new Date(exerciseTask.dueDate) : null,
 
       //appointment task fields
@@ -69,7 +69,7 @@ const ExerciseTaskForm: React.FC<ExerciseTaskFormProps> = ({exerciseTask, taskLi
       isDone: false,
       isArchived: false,
       prerequisiteTaskId: null,
-      subTaskId: null,
+      parentTaskId: null,
       dueDate: null,
 
       //appointment task fields
@@ -80,6 +80,18 @@ const ExerciseTaskForm: React.FC<ExerciseTaskFormProps> = ({exerciseTask, taskLi
       durationPerRep: null,
     }
   })
+
+  const fetchTasks = async () => {
+    const supabase = createClient()
+
+    const {data, error} = await supabase 
+    .from('Task')
+    .select('*')
+    .eq('taskListId', (taskListId) ? taskListId: exerciseTask?.taskListId)
+    .eq('isDone', false)
+
+    if(!error) setTasks(data)
+  }
 
   const onSubmit = async (values: FormSchemaType) => {
     const supabase = createClient();
@@ -93,7 +105,7 @@ const ExerciseTaskForm: React.FC<ExerciseTaskFormProps> = ({exerciseTask, taskLi
         isArchived: values.isArchived,
         dueDate: values.dueDate,
         prerequisiteTaskId: values.prerequisiteTaskId,
-        subTaskId: values.subTaskId,
+        parentTaskId: values.parentTaskId,
         
       })
       .eq('id', exerciseTask.taskId)
@@ -128,7 +140,7 @@ const ExerciseTaskForm: React.FC<ExerciseTaskFormProps> = ({exerciseTask, taskLi
           isArchived: values.isArchived,
           dueDate: values.dueDate,
           prerequisiteTaskId: values.prerequisiteTaskId,
-          subTaskId: values.subTaskId,
+          parentTaskId: values.parentTaskId,
           taskCreator: user?.id,
           
           type: TaskType.EXERCISE
@@ -153,6 +165,11 @@ const ExerciseTaskForm: React.FC<ExerciseTaskFormProps> = ({exerciseTask, taskLi
         
       }
 
+    useEffect(() => {
+      if (taskListId || exerciseTask) {
+        fetchTasks();
+      }
+    }, [taskListId, exerciseTask]);
   }
 
   return (
@@ -386,17 +403,17 @@ const ExerciseTaskForm: React.FC<ExerciseTaskFormProps> = ({exerciseTask, taskLi
         />
           <FormField
             control={form.control}
-            name='subTaskId'
+            name='parentTaskId'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Subtask</FormLabel>
+                <FormLabel>Parent Task</FormLabel>
                 <Select 
                   onValueChange={(value) => field.onChange(value ? Number(value) : null)}
                   defaultValue={field.value?.toString() || ""}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select Subtask" />                  
+                      <SelectValue placeholder="Select Parent Task" />                  
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -407,6 +424,9 @@ const ExerciseTaskForm: React.FC<ExerciseTaskFormProps> = ({exerciseTask, taskLi
                     ))}
                   </SelectContent>
                 </Select>
+                <FormDescription>
+                  Select a task to set this one as its subtask. Leave blank if this task has no parent.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}

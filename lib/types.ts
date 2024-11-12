@@ -150,13 +150,13 @@ export interface Task {
   isDone: boolean; // /
   isArchived: boolean; // x
   prerequisiteTaskId?: number; 
-  subTaskId: number
+  parentTaskId: number
   taskCreator: string; // /
   lastModifiedOn: Date;
 
   TaskCreator: User
   PrerequisiteTask?: Task[]
-  SubTask: Task[]
+  ParentTask: Task;
   AppointmentTask: AppointmentTask[]
   MedicationTask: MedicationTask[]
   TreatmentTask: TreatmentTask[]

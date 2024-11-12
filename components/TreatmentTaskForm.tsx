@@ -22,7 +22,7 @@ const formSchema = z.object({
   isDone: z.boolean(),
   isArchived: z.boolean(),
   prerequisiteTaskId: z.number().nullable(),
-  subTaskId: z.number().nullable(),
+  parentTaskId: z.number().nullable(),
 
   //treatment task fields
   medicalInstitutionId: z.number().nullable(),
@@ -51,7 +51,7 @@ const TreatmentTaskForm: React.FC<TreatmenTaskFormProps> = ({treatmentTask, task
       isDone: treatmentTask.isDone,
       isArchived: treatmentTask.isArchived,
       prerequisiteTaskId: treatmentTask.prerequisiteTaskId,
-      subTaskId: treatmentTask.subTaskId,
+      parentTaskId: treatmentTask.parentTaskId,
 
       //treatment task fields
       medicalInstitutionId: treatmentTask.medicalInstitutionId,
@@ -65,7 +65,7 @@ const TreatmentTaskForm: React.FC<TreatmenTaskFormProps> = ({treatmentTask, task
       isDone: false,
       isArchived: false,
       prerequisiteTaskId: null,
-      subTaskId: null,
+      parentTaskId: null,
 
       //treatment task fields
       medicalInstitutionId: null,
@@ -91,7 +91,7 @@ const TreatmentTaskForm: React.FC<TreatmenTaskFormProps> = ({treatmentTask, task
     const {data, error} = await supabase 
     .from('Task')
     .select('*')
-    .eq('taskListId', taskListId)
+    .eq('taskListId', (taskListId) ? taskListId : treatmentTask?.taskListId)
     .eq('isDone', false)
 
     if(!error) setTasks(data)
@@ -108,7 +108,7 @@ const TreatmentTaskForm: React.FC<TreatmenTaskFormProps> = ({treatmentTask, task
         isDone: values.isDone,
         isArchived: values.isArchived,
         prerequisiteTaskId: values.prerequisiteTaskId,
-        subTaskId: values.subTaskId,
+        parentTaskId: values.parentTaskId,
 
         dueDate: values.date
       })
@@ -143,7 +143,7 @@ const TreatmentTaskForm: React.FC<TreatmenTaskFormProps> = ({treatmentTask, task
         isDone: values.isDone,
         isArchived: values.isArchived,
         prerequisiteTaskId: values.prerequisiteTaskId,
-        subTaskId: values.subTaskId,
+        parentTaskId: values.parentTaskId,
         taskCreator: user?.id,
 
         dueDate: values.date,
@@ -169,11 +169,13 @@ const TreatmentTaskForm: React.FC<TreatmenTaskFormProps> = ({treatmentTask, task
     }
   }
   
-
   useEffect(() => {
-    fetchMedicalInstitutions()
-    fetchTasks()
-  }, [])
+    if (taskListId || treatmentTask) {
+      
+      fetchMedicalInstitutions()
+      fetchTasks()
+    }
+  }, [taskListId, treatmentTask]);
   
 
   return (
@@ -381,17 +383,17 @@ const TreatmentTaskForm: React.FC<TreatmenTaskFormProps> = ({treatmentTask, task
           />
           <FormField
             control={form.control}
-            name='subTaskId'
+            name='parentTaskId'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Subtask</FormLabel>
+                <FormLabel>Parent Task</FormLabel>
                 <Select 
                   onValueChange={(value) => field.onChange(value ? Number(value) : null)}
                   defaultValue={field.value?.toString() || ""}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select Subtask" />                  
+                      <SelectValue placeholder="Select Parent Task" />                  
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -402,6 +404,9 @@ const TreatmentTaskForm: React.FC<TreatmenTaskFormProps> = ({treatmentTask, task
                     ))}
                   </SelectContent>
                 </Select>
+                <FormDescription>
+                  Select a task to set this one as its subtask. Leave blank if this task has no parent.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}

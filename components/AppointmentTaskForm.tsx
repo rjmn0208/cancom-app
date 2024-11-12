@@ -23,7 +23,7 @@ const formSchema = z.object({
   isDone: z.boolean(),
   isArchived: z.boolean(),
   prerequisiteTaskId: z.number().nullable(),
-  subTaskId: z.number().nullable(),
+  parentTaskId: z.number().nullable(),
 
   //appointment task fields
   doctorId: z.number().nullable(),
@@ -55,7 +55,7 @@ const AppointmentTaskForm: React.FC<AppointmentTaskFormProps>  = ({appointmentTa
       isDone: appointmentTask.isDone,
       isArchived: appointmentTask.isArchived,
       prerequisiteTaskId: appointmentTask.prerequisiteTaskId,
-      subTaskId: appointmentTask.subTaskId,
+      parentTaskId: appointmentTask.parentTaskId,
 
       //appointment task fields
       doctorId: appointmentTask.doctorId,
@@ -69,7 +69,7 @@ const AppointmentTaskForm: React.FC<AppointmentTaskFormProps>  = ({appointmentTa
       isDone: false,
       isArchived: false,
       prerequisiteTaskId: null,
-      subTaskId: null,
+      parentTaskId: null,
 
       //appointment task fields
       doctorId: null,
@@ -85,7 +85,7 @@ const AppointmentTaskForm: React.FC<AppointmentTaskFormProps>  = ({appointmentTa
     const {data, error} = await supabase 
     .from('Task')
     .select('*')
-    .eq('taskListId', taskListId)
+    .eq('taskListId', (taskListId) ? taskListId : appointmentTask?.taskListId)
     .eq('isDone', false)
 
     if(!error) setTasks(data)
@@ -113,7 +113,7 @@ const AppointmentTaskForm: React.FC<AppointmentTaskFormProps>  = ({appointmentTa
         isDone: values.isDone,
         isArchived: values.isArchived,
         prerequisiteTaskId: values.prerequisiteTaskId,
-        subTaskId: values.subTaskId,
+        parentTaskId: values.parentTaskId,
 
         dueDate: values.appointmentDate
       })
@@ -149,7 +149,7 @@ const AppointmentTaskForm: React.FC<AppointmentTaskFormProps>  = ({appointmentTa
         isDone: values.isDone,
         isArchived: values.isArchived,
         prerequisiteTaskId: values.prerequisiteTaskId,
-        subTaskId: values.subTaskId,
+        parentTaskId: values.parentTaskId,
         taskCreator: user?.id,
 
         dueDate: values.appointmentDate,
@@ -175,10 +175,13 @@ const AppointmentTaskForm: React.FC<AppointmentTaskFormProps>  = ({appointmentTa
     
   }
 
+
   useEffect(() => {
-    fetchDoctors();
-    fetchTasks();
-  }, []);
+    if (taskListId || appointmentTask) {
+      fetchDoctors();
+      fetchTasks();
+    }
+  }, [taskListId, appointmentTask]);
   
   return (
     
@@ -372,17 +375,17 @@ const AppointmentTaskForm: React.FC<AppointmentTaskFormProps>  = ({appointmentTa
           />
           <FormField
             control={form.control}
-            name='subTaskId'
+            name='parentTaskId'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Subtask</FormLabel>
+                <FormLabel>Parent Task</FormLabel>
                 <Select 
                   onValueChange={(value) => field.onChange(value ? Number(value) : null)}
                   defaultValue={field.value?.toString() || ""}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select Subtask" />                  
+                      <SelectValue placeholder="Select Parent Task" />                  
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -393,6 +396,9 @@ const AppointmentTaskForm: React.FC<AppointmentTaskFormProps>  = ({appointmentTa
                     ))}
                   </SelectContent>
                 </Select>
+                <FormDescription>
+                  Select a task to set this one as its subtask. Leave blank if this task has no parent.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}

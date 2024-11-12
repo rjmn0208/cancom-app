@@ -23,6 +23,8 @@ const VitalsReadingPage = () => {
 
   const fetchVitalReadings = async () => {
     const supabase = createClient();
+    const {data: {user}} = await supabase.auth.getUser()
+
     const { data, error } = await supabase
     .from('VitalReading')
     .select(`
@@ -32,7 +34,8 @@ const VitalsReadingPage = () => {
         User(*)),
       RecordedBy: User!VitalsReading_recordedBy_fkey(*),
       LastEditedBy: User!VitalReading_lastEditedBy_fkey(*)
-    `);
+    `)
+    .eq('recordedBy', user?.id)
     
     console.log(data, error)
 

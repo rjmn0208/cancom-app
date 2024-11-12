@@ -23,7 +23,7 @@ const formSchema = z.object({
   isDone: z.boolean(),
   isArchived: z.boolean(),
   prerequisiteTaskId: z.number().nullable(),
-  subTaskId: z.number().nullable()
+  parentTaskId: z.number().nullable()
 })
 type FormSchemaType = z.infer<typeof formSchema>
 
@@ -50,7 +50,7 @@ const GeneralTaskForm: React.FC<TaskFormProps>= ({task, taskListId}) => {
           isDone: task.isDone,
           isArchived: task.isArchived,  
           prerequisiteTaskId: task.prerequisiteTaskId,
-          subTaskId: task.subTaskId,
+          parentTaskId: task.parentTaskId,
         } 
       : {
           title: '',
@@ -60,7 +60,7 @@ const GeneralTaskForm: React.FC<TaskFormProps>= ({task, taskListId}) => {
           isDone: false,
           isArchived: false,
           prerequisiteTaskId: null,
-          subTaskId: null,  
+          parentTaskId: null,  
         }
   })
 
@@ -70,7 +70,7 @@ const GeneralTaskForm: React.FC<TaskFormProps>= ({task, taskListId}) => {
     const {data, error} = await supabase 
     .from('Task')
     .select('*')
-    .eq('taskListId', taskListId)
+    .eq('taskListId', (taskListId) ? taskListId: task?.taskListId)
     .eq('isDone', false)
 
     if(!error) setTasks(data)
@@ -112,8 +112,10 @@ const GeneralTaskForm: React.FC<TaskFormProps>= ({task, taskListId}) => {
   }
 
   useEffect(() => {
-    fetchTasks()
-  }, [])
+    if (taskListId || task) {
+      fetchTasks();
+    }
+  }, [taskListId, task]);
   
 
   
@@ -262,17 +264,17 @@ const GeneralTaskForm: React.FC<TaskFormProps>= ({task, taskListId}) => {
         />
         <FormField
           control={form.control}
-          name='subTaskId'
+          name='parentTaskId'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Subtask</FormLabel>
+              <FormLabel>Parent Task</FormLabel>
               <Select 
                 onValueChange={(value) => field.onChange(value ? Number(value) : null)}
                 defaultValue={field.value?.toString() || ""}
               >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select Subtask" />                  
+                    <SelectValue placeholder="Select Parent Task" />                  
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -283,6 +285,9 @@ const GeneralTaskForm: React.FC<TaskFormProps>= ({task, taskListId}) => {
                   ))}
                 </SelectContent>
               </Select>
+              <FormDescription>
+                Select a task to set this one as its subtask. Leave blank if this task has no parent.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

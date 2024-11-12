@@ -76,22 +76,72 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) =>  {
     }
   }
 
-  const handleComplete = async(task: Task) => {
-    const supabase = createClient()
-    const {error} = await supabase
-    .from('Task')
-    .update({
-      'isDone': true,
-      'finishDate': new Date()
-    })
-    .eq('id', task.id)
-
-    if(!error) {
-      toast.success('Task marked complete')
-      fetchTasks()
-      fetchCompletedTasks()
+  const handleComplete = async (task: Task) => {
+    const supabase = createClient();
+  
+    // Step 1: Check if the task has a prerequisite task and if it is completed
+    if (task.prerequisiteTaskId) {
+      const { data: prerequisiteTask, error: prerequisiteError } = await supabase
+        .from('Task')
+        .select('id, isDone')
+        .eq('id', task.prerequisiteTaskId)
+        .single();
+  
+      if (prerequisiteError) {
+        toast.error('Error fetching prerequisite task');
+        return;
+      }
+  
+      if (!prerequisiteTask?.isDone) {
+        toast.error(`Please complete the prerequisite task before completing ${task.title}`);
+        return;
+      }
     }
-  }
+  
+    // Step 2: Check if the task has subtasks and mark them as complete
+    const { data: subtasks, error: subtaskError } = await supabase
+      .from('Task')
+      .select('id')
+      .eq('parentTaskId', task.id); // Assuming 'parentTaskId' is used to link subtasks
+  
+    if (subtaskError) {
+      toast.error('Error fetching subtasks');
+      return;
+    }
+  
+    if (subtasks && subtasks.length > 0) {
+      // Mark all subtasks as complete
+      const { error: updateSubtasksError } = await supabase
+        .from('Task')
+        .update({ isDone: true, finishDate: new Date() })
+        .in('id', subtasks.map((subtask) => subtask.id));
+  
+      if (updateSubtasksError) {
+        toast.error('Error completing subtasks');
+        return;
+      }
+    }
+  
+    // Step 3: Mark the current task as complete
+    const { error } = await supabase
+      .from('Task')
+      .update({
+        isDone: true,
+        finishDate: new Date()
+      })
+      .eq('id', task.id);
+  
+    if (!error) {
+      toast.success('Task marked complete');
+      fetchTasks();
+      fetchArchivedTasks()
+      fetchCompletedTasks();
+    } else {
+      toast.error('Error completing task');
+    }
+  };
+  
+  
 
   const handleUndoComplete = async(task: Task) => {
     const supabase = createClient()
@@ -273,6 +323,7 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) =>  {
             {tasks
               .filter((task) => task.type === type)
               .map((task) => (
+                
                 <TaskCard
                   key={task.id}
                   task={task}

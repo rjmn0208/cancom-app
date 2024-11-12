@@ -15,6 +15,30 @@ interface ListMembershipTableProps {
 const ListMembershipTable: React.FC<ListMembershipTableProps> = ({taskListId}) => {
   const [listMembers, setListMembers] = useState<ListMembership[]>([])
   const [permission, setPermission] = useState<ListPermission>()
+  const [isOwner, setIsOwner] = useState<boolean> (false)
+
+  const fetchTaskListData = async () => {
+    const supabase = createClient()
+    const {data: {user}} = await supabase.auth.getUser()
+
+    const {data: PatientData, error: PatientError} = await supabase
+    .from('Patient')
+    .select('id')
+    .eq('userId', user?.id)
+    .single()
+
+    if (PatientError) return
+
+    const {data: TaskListData, error: TaskListError} = await supabase
+    .from('TaskList')
+    .select('patientId')
+    .eq('patientId', PatientData?.id)
+    .single()
+
+    
+    if(!TaskListError) setIsOwner(PatientData.id === TaskListData.patientId)
+  }
+
   const fetchTaskListMembers = async() => {
     const supabase = createClient()
 
@@ -59,6 +83,7 @@ const ListMembershipTable: React.FC<ListMembershipTableProps> = ({taskListId}) =
   useEffect(() => {
     fetchTaskListMembers()
     fetchPermission()
+    fetchTaskListData()
   }, [])
   
 
@@ -106,7 +131,7 @@ const ListMembershipTable: React.FC<ListMembershipTableProps> = ({taskListId}) =
                           hour12: true
                         })}</TableCell>
               <TableCell>
-                {isListManager() ? 
+                {isOwner || isListManager() ? 
                 <div>
                   <Dialog onOpenChange={handleOpenChange}>
                     <DialogTrigger asChild>
