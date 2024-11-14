@@ -35,6 +35,7 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) =>  {
       .from('ListMembership')
       .select('permission')
       .eq('userId', user?.id)
+      .eq('taskListId', taskListId)
       .single()
 
     if(!error) setPermission(data.permission)

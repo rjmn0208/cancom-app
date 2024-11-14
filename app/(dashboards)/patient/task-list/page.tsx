@@ -46,7 +46,10 @@ const TaskListPage = () => {
   const handleCreateTaskList = async () => {
     const { data, error } = await supabase
       .from('TaskList')
-      .insert([{ patientId: patientId }])
+      .insert([{ 
+        patientId: patientId,
+         
+      }])
       .select()
 
     if (data) {

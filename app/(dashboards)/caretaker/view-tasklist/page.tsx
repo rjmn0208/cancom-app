@@ -46,7 +46,7 @@ export default function ViewTaskLists() {
           <Card key={list.id} className="shadow-md hover:shadow-lg transition-shadow duration-300">
             <CardHeader>
               <CardTitle className="text-lg">
-                {list.Patient.User.firstName} {list.Patient.User.middleName} {list.Patient.User.lastName}
+                {list.Patient?.User.firstName} {list.Patient?.User.middleName} {list.Patient?.User.lastName}
               </CardTitle>
             </CardHeader>
             <CardContent>

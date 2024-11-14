@@ -57,6 +57,7 @@ const ListMembershipTable: React.FC<ListMembershipTableProps> = ({taskListId}) =
       .from('ListMembership')
       .select('permission')
       .eq('userId', user?.id)
+      .eq('taskListId', taskListId)
       .single()
 
     if(!error) setPermission(data.permission)
