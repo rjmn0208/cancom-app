@@ -154,6 +154,7 @@ export interface Task {
   taskCreator: string; // /
   lastModifiedOn: Date;
 
+  TaskTag: TaskTag[]
   TaskCreator: User
   PrerequisiteTask?: Task[]
   ParentTask: Task;
@@ -216,8 +217,8 @@ export interface TreatmentTask extends Task{
 
 export interface TaskList {
   id: number;
-  completedTaskCount: number;
-  uncompletedTaskCount: number;
+  completedTasksCount: number;
+  uncompletedTasksCount: number;
   patientId: number
 
   Patient: Patient
@@ -242,4 +243,16 @@ export interface MedicalInstitution {
   addressId: number;
 
   Address: Address
+}
+
+export interface TaskTag {
+  id: number;
+  taskId: number;
+  value: string;
+  color: string;
+  createdBy: string;
+  createdAt: Date
+
+  CreatedBy: User
+  Task: Task
 }

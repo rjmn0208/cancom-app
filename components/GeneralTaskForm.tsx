@@ -105,6 +105,8 @@ const GeneralTaskForm: React.FC<TaskFormProps>= ({task, taskListId}) => {
           taskCreator: user?.id
         })
         .select()
+
+      console.log(error)
       if (!error) {
         toast.success('Task saved successfully')
       }

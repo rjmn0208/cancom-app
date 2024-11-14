@@ -44,7 +44,7 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) =>  {
     const supabase = createClient()
     const { data, error } = await supabase
       .from('Task')
-      .select('*, TaskCreator: User(*),ExerciseTask(*), MedicationTask(*), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))')
+      .select('*, TaskTag(*), TaskCreator: User(*),ExerciseTask(*), MedicationTask(*), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))')
       .eq('taskListId', taskListId)
       .eq('isDone', false)
       .eq('isArchived', false)
@@ -56,7 +56,7 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) =>  {
     const supabase = createClient()
     const { data, error } = await supabase
       .from('Task')
-      .select('*, TaskCreator: User(*), ExerciseTask(*), MedicationTask(*), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))')
+      .select('*, TaskTag(*), TaskCreator: User(*), ExerciseTask(*), MedicationTask(*), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))')
       .eq('taskListId', taskListId)
       .eq('isDone', true)
       .eq('isArchived', false)
@@ -70,7 +70,7 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) =>  {
 
     const { data, error } = await supabase
       .from('Task')
-      .select('*, TaskCreator: User(*), ExerciseTask (*), MedicationTask(*), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))')
+      .select('*, TaskTag(*), TaskCreator: User(*), ExerciseTask (*), MedicationTask(*), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))')
       .eq('taskListId', taskListId)
       .eq('isArchived', true)
       .eq('isDone', false)

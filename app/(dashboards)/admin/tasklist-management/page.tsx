@@ -40,8 +40,8 @@ const TaskListManagementPage = () => {
           <TableRow>
             <TableCell>{list.id}</TableCell>
             <TableCell>{list.Patient.User.firstName} {list.Patient.User.middleName} {list.Patient.User.lastName}</TableCell>
-            <TableCell>{list.uncompletedTaskCount}</TableCell>
-            <TableCell>{list.completedTaskCount}</TableCell>
+            <TableCell>{list.uncompletedTasksCount}</TableCell>
+            <TableCell>{list.completedTasksCount}</TableCell>
 
           </TableRow>
         ))}

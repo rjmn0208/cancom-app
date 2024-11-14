@@ -53,11 +53,11 @@ export default function ViewTaskLists() {
               <div className="flex justify-between items-center">
                 <div className="flex items-center">
                   <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                  <span>{list.completedTaskCount} completed</span>
+                  <span>{list.completedTasksCount} completed</span>
                 </div>
                 <div className="flex items-center">
                   <XCircle className="h-5 w-5 text-red-500 mr-2" />
-                  <span>{list.uncompletedTaskCount} pending</span>
+                  <span>{list.uncompletedTasksCount} pending</span>
                 </div>
               </div>
               <Button asChild className="w-full mt-4">
