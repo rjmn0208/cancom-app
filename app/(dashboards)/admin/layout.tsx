@@ -1,5 +1,6 @@
 import { signOutAction } from "@/app/auth/auth-actions";
 import { Button } from "@/components/ui/button";
+import UserDetails from "@/components/UserEmail";
 import Link from "next/link";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -48,9 +49,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </Link>
 
         </nav>
-        <form action={signOutAction}>
-          <Button variant='destructive' type='submit'>Sign Out</Button>
-        </form>
+        <UserDetails />
       </aside>
       <main className="flex-1 p-10 overflow-auto">{children}</main>
     </div>

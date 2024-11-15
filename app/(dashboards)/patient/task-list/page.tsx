@@ -9,27 +9,27 @@ import { useEffect, useState } from 'react';
 
 
 const TaskListPage = () => {
-  const [taskListId, setTaskListId] = useState<number | null>(null);
-  const [patientId, setPatientId] = useState<number | null>(null);
+  const [taskListId, setTaskListId] = useState<number>();
   const [isLoading, setIsLoading] = useState(true); 
   const supabase = createClient();
   const router = useRouter();
 
   const getPatientAndTaskListIds = async () => {
-  
+    const {data: {user}} = await supabase.auth.getUser()
     const { data: patientData, error: patientError } = await supabase
       .from('Patient')
       .select('id')
+      .eq('userId', user?.id)
       .single();
-    
-    setPatientId(patientData?.id)
+
+    if(patientError) throw new Error(patientError.message)
   
     const { data: taskListData, error: taskListError } = await supabase
       .from('TaskList')
       .select('id')
-      .eq('patientId', patientId)
+      .eq('patientId', patientData.id)
       .single()
-    
+
     setTaskListId(taskListData?.id)
 
   };
@@ -40,14 +40,22 @@ const TaskListPage = () => {
     if(taskListId){
       router.push(`/patient/task-list/${taskListId}`)
     }
-    setIsLoading(false)
   }, [taskListId]); 
 
   const handleCreateTaskList = async () => {
+    const {data: {user}} = await supabase.auth.getUser()
+    const { data: patientData, error: patientError } = await supabase
+      .from('Patient')
+      .select('id')
+      .eq('userId', user?.id)
+      .single();
+
+    if(patientError) throw new Error(patientError.message)
+
     const { data, error } = await supabase
       .from('TaskList')
       .insert([{ 
-        patientId: patientId,
+        patientId: patientData.id,
          
       }])
       .select()
@@ -57,6 +65,23 @@ const TaskListPage = () => {
       router.push(`/patient/task-list/${data[0].id}`); 
     }
   };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      await getPatientAndTaskListIds();
+      setIsLoading(false);
+    };
+  
+    fetchData();
+  }, []); 
+
+  useEffect(() => {
+    if (taskListId) {
+      router.push(`/patient/task-list/${taskListId}`);
+    }
+  }, [taskListId]);
+  
 
 
   return (

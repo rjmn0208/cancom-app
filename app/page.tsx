@@ -10,10 +10,7 @@ export default function Page() {
       <p className="text-lg mb-8">Your companion in the fight against cancer.</p>
       <div className="flex flex-col sm:flex-row gap-4">
         <Button asChild>
-          <Link href="/sign-in">Sign In</Link>
-        </Button>
-        <Button asChild variant="outline">
-          <Link href="/sign-up">Sign Up</Link>
+          <Link href="/sign-in">Get Started</Link>
         </Button>
       </div>
     </main>

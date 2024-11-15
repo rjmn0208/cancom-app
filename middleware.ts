@@ -18,9 +18,6 @@ export async function middleware(request: NextRequest) {
     ADMIN: '/admin'
   }
   
-  const AUTH_PATHS = ['/sign-in','/sign-up', '/onboarding']
-
-  const inAuthPath = AUTH_PATHS.includes(currentPath)
   const inProtectedPath = Object.values(PROTECTED_PATHS_PREFIX).some((path) =>
     currentPath.startsWith(path)
   );
