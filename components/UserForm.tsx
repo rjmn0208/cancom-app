@@ -17,7 +17,7 @@ const formSchema = z.object({
   firstName: z.string(),
   middleName: z.string(),
   lastName: z.string(),
-  userType: z.enum(['PATIENT', 'CARETAKER', 'DOCTOR', 'ADMIN']).nullable(),
+  userType: z.enum(['PATIENT', 'CARETAKER', 'DOCTOR', 'ADMIN', 'MEDICAL_STAFF']).nullable(),
   gender: z.enum(['MALE', 'FEMALE', 'OTHER']).nullable(),
   phone: z.string()
 })
@@ -191,7 +191,7 @@ const UserForm: React.FC<UserFormProps> = ({ userData }) => {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                {["PATIENT", "CARETAKER", "DOCTOR", 'ADMIN'].map((value) => (
+                {['PATIENT', 'CARETAKER', 'DOCTOR', 'ADMIN', 'MEDICAL_STAFF'].map((value) => (
                     <SelectItem key={value} value={value}>
                       {value}
                     </SelectItem>

@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { signOutAction } from "@/app/auth/auth-actions";
-import UserEmail from "@/components/UserEmail";
-import UserDetails from "@/components/UserEmail";
+import UserEmail from "@/components/UserDetails";
+import UserDetails from "@/components/UserDetails";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   

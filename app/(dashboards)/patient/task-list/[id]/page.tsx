@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Clock, Pill, Stethoscope, User, BookOpen, Cross } from 'lucide-react'
 import { Button } from "@/components/ui/button"
-import { Task, TaskType } from '@/lib/types'
+import { Task, TaskTag, TaskType } from '@/lib/types'
 import { createClient } from '@/utils/supabase/client'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { toast } from 'sonner'
@@ -60,6 +60,22 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) =>  {
       .eq('isDone', false)
     
       if (!error && data) setArchivedTasks(data)
+  }
+
+  const handleTaskTagDelete = async (tag: TaskTag) => {
+    const supabase = createClient()
+    const {data, error} = await supabase
+    .from('TaskTag')
+    .delete()
+    .eq('id', tag.id)
+
+    if(!error) {
+      toast.success('Tag deleted successfully')
+      fetchTasks()
+      fetchCompletedTasks()
+      fetchArchivedTasks()
+    }
+
   }
 
   const handleDelete = async (task: Task) => {
@@ -249,6 +265,7 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) =>  {
                   onComplete={handleComplete}
                   onUndoComplete={handleUndoComplete}
                   onOpenChange={handleOpenChange}
+                  onTagDelete={handleTaskTagDelete}
                   isCompleted={true}
                 />
               ))}
@@ -270,6 +287,7 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) =>  {
                   onDelete={handleDelete}
                   onComplete={handleComplete}
                   onUndoComplete={handleUndoComplete}
+                  onTagDelete={handleTaskTagDelete}
                   onOpenChange={handleOpenChange}
                 />
               ))}
@@ -330,6 +348,7 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) =>  {
                   onDelete={handleDelete}
                   onComplete={handleComplete}
                   onOpenChange={handleOpenChange}
+                  onTagDelete={handleTaskTagDelete}
                 />
               ))}
             </div>

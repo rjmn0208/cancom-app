@@ -50,7 +50,8 @@ export enum UserType {
   PATIENT = "PATIENT",
   CARETAKER = "CARETAKER",
   DOCTOR = "DOCTOR",
-  ADMIN = 'ADMIN'
+  ADMIN = 'ADMIN',
+  MEDICAL_STAFF = 'MEDICAL_STAFF'
 }
 
 export enum Gender {
@@ -107,6 +108,17 @@ export interface Doctor {
   licenseNumber: string,
 
   User: User
+}
+
+export interface MedicalStaff {
+  id: number;
+  userId: string;
+  medicalInstitutionId: number;
+  designation: string;
+  staffLicenseNumber: string,
+
+  MedicalInstitution: MedicalInstitution
+
 }
 
 export interface Caretaker {

@@ -1,11 +1,11 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { Task, TaskType, TaskPriority, MedicationTask } from '@/lib/types'
+import { Task, TaskType, TaskPriority, MedicationTask, TaskTag } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { CalendarIcon, CheckCircleIcon, ClockIcon, UserIcon, Trash2Icon, UndoIcon, Pill, Stethoscope, Dumbbell, Syringe, EditIcon, Ellipsis, Tag } from 'lucide-react'
+import { CalendarIcon, CheckCircleIcon, ClockIcon, UserIcon, Trash2Icon, UndoIcon, Pill, Stethoscope, Dumbbell, Syringe, EditIcon, Ellipsis, Tag, X, LucideFlaskConical } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog'
 import AppointmentTaskForm from './AppointmentTaskForm'
 import MedicationTaskForm from './MedicationTaskForm'
@@ -14,21 +14,23 @@ import ExerciseTaskForm from './ExerciseTaskForm'
 import GeneralTaskForm from './GeneralTaskForm'
 import { createClient } from '@/utils/supabase/client'
 import TaskTagForm from './TaskTagForm'
+import { toast } from 'sonner'
 
 interface TaskCardProps {
   task: Task
   onDelete: (task: Task) => void
   onComplete: (task: Task) => void
   onUndoComplete?: (task: Task) => void
+  onTagDelete: (tag: TaskTag) => void
   onOpenChange: (open: boolean) => void
   isCompleted?: boolean
 }
 
-export default function TaskCard({ task, onDelete, onComplete, onUndoComplete, onOpenChange, isCompleted = false }: TaskCardProps) {
+export default function TaskCard({ task, onDelete, onComplete, onUndoComplete, onOpenChange, isCompleted = false , onTagDelete}: TaskCardProps) {
   const [subTasks, setSubTasks] = useState<Task[]>([])
   const [prerequisites, setPrerequisites] = useState<Task[]>([])
 
-  const handleAction = (action: 'delete' | 'complete' | 'undoComplete') => {
+  const handleAction = (action: 'delete' | 'complete' | 'undoComplete' ) => {
     switch (action) {
       case 'delete':
         onDelete(task)
@@ -187,6 +189,7 @@ export default function TaskCard({ task, onDelete, onComplete, onUndoComplete, o
     if (!error) setPrerequisites(data)
   }
 
+
   useEffect(() => {
     fetchSubTasks()
     fetchPreReqTasks()
@@ -343,11 +346,23 @@ export default function TaskCard({ task, onDelete, onComplete, onUndoComplete, o
         <Trash2Icon className="w-4 h-4" />
       </Button>
 
-      <div className="space-x-1 mt-2">
-        {task.TaskTag.map((tag) => (
-          <Badge key={tag.id} style={getColor(tag.color)}>
-            #{tag.value}
-          </Badge>
+      <div className="flex flex-wrap gap-2">
+        {task.TaskTag.map((tag: TaskTag) => (
+          <div
+            key={tag.id}
+            className="flex items-center rounded-md px-2 py-1 text-sm font-medium"
+            style={getColor(tag.color)}
+          >
+            <span className="mr-2">#{tag.value}</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="p-0 w-5 h-5 flex items-center justify-center hover:bg-red-400"
+              onClick={() => onTagDelete(tag)}
+            >
+              <X size={12} />
+            </Button>
+          </div>
         ))}
       </div>
     </div>
