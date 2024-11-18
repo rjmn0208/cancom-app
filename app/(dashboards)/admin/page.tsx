@@ -25,7 +25,7 @@ async function AdminDashboard() {
         User Management
       </Link>
       <Link
-        href="/admin/vitals-management"
+        href="/admin/vitalreadings"
         className="block text-muted-foreground hover:text-foreground transition-colors"
       >
         Vitals and Vital Readings
