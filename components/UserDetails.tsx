@@ -1,9 +1,16 @@
-import { createClient } from '@/utils/supabase/server';
-import React from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
-import { signOutAction } from '@/app/auth/auth-actions';
-import { Button } from './ui/button';
-import { Badge } from './ui/badge';
+import { createClient } from "@/utils/supabase/server";
+import React from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
+import { signOutAction } from "@/app/auth/auth-actions";
+import { Button } from "./ui/button";
+import { Badge } from "./ui/badge";
 
 const UserDetails = async () => {
   const supabase = createClient();
@@ -24,9 +31,9 @@ const UserDetails = async () => {
 
   // Fetch additional user details from the 'User' table
   const { data: userDetails, error: detailsError } = await supabase
-    .from('User')
-    .select('firstName, middleName ,lastName, userType')
-    .eq('id', user.id)
+    .from("User")
+    .select("firstName, middleName ,lastName, userType")
+    .eq("id", user.id)
     .single();
 
   if (detailsError) {
@@ -43,23 +50,21 @@ const UserDetails = async () => {
         <CardTitle>User</CardTitle>
       </CardHeader>
       <CardContent>
-        
         <p>
-         {userDetails?.firstName} {userDetails?.middleName} {userDetails?.lastName}
+          {userDetails?.firstName} {userDetails?.middleName}{" "}
+          {userDetails?.lastName}
         </p>
-        <p>
-          {user.email}
-        </p>
+        <p>{user.email}</p>
         <Badge>{userDetails.userType}</Badge>
       </CardContent>
       <CardFooter>
-        
         <form action={signOutAction}>
-          <Button variant='destructive' type='submit'>Sign Out</Button>
+          <Button variant="destructive" type="submit">
+            Sign Out
+          </Button>
         </form>
       </CardFooter>
     </Card>
-
   );
 };
 

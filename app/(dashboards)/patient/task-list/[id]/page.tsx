@@ -1,218 +1,235 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { Clock, Pill, Stethoscope, User, BookOpen, Cross } from 'lucide-react'
-import { Button } from "@/components/ui/button"
-import { Task, TaskTag, TaskType } from '@/lib/types'
-import { createClient } from '@/utils/supabase/client'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { toast } from 'sonner'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
-import TaskCard from '@/components/TaskCard'
-import ListMemberForm from '@/components/ListMemberForm'
-import ListMembershipTable from '@/components/ListMembershipTable'
-import MedicationTaskForm from '@/components/MedicationTaskForm'
-import { Label } from '@/components/ui/label'
-import GeneralTaskForm from '@/components/GeneralTaskForm'
-import AppointmentTaskForm from '@/components/AppointmentTaskForm'
-import { Separator } from '@/components/ui/separator'
-import TreatmentTaskForm from '@/components/TreatmentTaskForm'
-import ExerciseTaskForm from '@/components/ExerciseTaskForm'
+import { useState, useEffect } from "react";
+import { Clock, Pill, Stethoscope, User, BookOpen, Cross } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Task, TaskTag, TaskType } from "@/lib/types";
+import { createClient } from "@/utils/supabase/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import TaskCard from "@/components/TaskCard";
+import ListMemberForm from "@/components/ListMemberForm";
+import ListMembershipTable from "@/components/ListMembershipTable";
+import MedicationTaskForm from "@/components/MedicationTaskForm";
+import { Label } from "@/components/ui/label";
+import GeneralTaskForm from "@/components/GeneralTaskForm";
+import AppointmentTaskForm from "@/components/AppointmentTaskForm";
+import { Separator } from "@/components/ui/separator";
+import TreatmentTaskForm from "@/components/TreatmentTaskForm";
+import ExerciseTaskForm from "@/components/ExerciseTaskForm";
 
-const PatientTaskListPage = ({ params }: { params: { id: string } }) =>  {
-  const [tasks, setTasks] = useState<Task[]>([])
-  const [completedTasks, setCompletedTasks] = useState<Task[]>([])
-  const [archivedTasks, setArchivedTasks] = useState<Task[]>([])
-  const [addTaskType, setAddTaskType] = useState<TaskType>()
+const PatientTaskListPage = ({ params }: { params: { id: string } }) => {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [completedTasks, setCompletedTasks] = useState<Task[]>([]);
+  const [archivedTasks, setArchivedTasks] = useState<Task[]>([]);
+  const [addTaskType, setAddTaskType] = useState<TaskType>();
 
-  const taskListId = Number(params.id)
+  const taskListId = Number(params.id);
 
   const fetchTasks = async () => {
-    const supabase = createClient()
+    const supabase = createClient();
     const { data, error } = await supabase
-      .from('Task')
-      .select('*, TaskTag(*), TaskCreator: User(*),ExerciseTask(*), MedicationTask(*), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))')
-      .eq('taskListId', taskListId)
-      .eq('isDone', false)
+      .from("Task")
+      .select(
+        "*, TaskTag(*), TaskCreator: User(*),ExerciseTask(*), MedicationTask(*), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))"
+      )
+      .eq("taskListId", taskListId)
+      .eq("isDone", false);
 
-      console.log('Tasks:', data, 'Error:', error)
-    if (!error && data) setTasks(data)
-  }
+    console.log("Tasks:", data, "Error:", error);
+    if (!error && data) setTasks(data);
+  };
 
   const fetchCompletedTasks = async () => {
-    const supabase = createClient()
+    const supabase = createClient();
     const { data, error } = await supabase
-      .from('Task')
-      .select('*, TaskTag(*), TaskCreator: User(*), ExerciseTask(*), MedicationTask(*), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))')
-      .eq('taskListId', taskListId)
-      .eq('isDone', true)
-    
-      if (!error && data) setCompletedTasks(data)
-  }
+      .from("Task")
+      .select(
+        "*, TaskTag(*), TaskCreator: User(*), ExerciseTask(*), MedicationTask(*), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))"
+      )
+      .eq("taskListId", taskListId)
+      .eq("isDone", true);
+
+    if (!error && data) setCompletedTasks(data);
+  };
 
   const fetchArchivedTasks = async () => {
-    const supabase = createClient()
+    const supabase = createClient();
     const { data, error } = await supabase
-      .from('Task')
-      .select('*, TaskTag(*), TaskCreator: User(*), ExerciseTask (*), MedicationTask(*), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))')
-      .eq('taskListId', taskListId)
-      .eq('isArchived', true)
-      .eq('isDone', false)
-    
-      if (!error && data) setArchivedTasks(data)
-  }
+      .from("Task")
+      .select(
+        "*, TaskTag(*), TaskCreator: User(*), ExerciseTask (*), MedicationTask(*), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))"
+      )
+      .eq("taskListId", taskListId)
+      .eq("isArchived", true)
+      .eq("isDone", false);
+
+    if (!error && data) setArchivedTasks(data);
+  };
 
   const handleTaskTagDelete = async (tag: TaskTag) => {
-    const supabase = createClient()
-    const {data, error} = await supabase
-    .from('TaskTag')
-    .delete()
-    .eq('id', tag.id)
-
-    if(!error) {
-      toast.success('Tag deleted successfully')
-      fetchTasks()
-      fetchCompletedTasks()
-      fetchArchivedTasks()
-    }
-
-  }
-
-  const handleDelete = async (task: Task) => {
-    const supabase = createClient()
-    const { error } = await supabase
-      .from('Task')
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("TaskTag")
       .delete()
-      .eq('id', task.id)
+      .eq("id", tag.id);
 
     if (!error) {
-      toast.success('Task deleted successfully')
-      fetchTasks()
-      fetchCompletedTasks()
+      toast.success("Tag deleted successfully");
+      fetchTasks();
+      fetchCompletedTasks();
+      fetchArchivedTasks();
     }
-  }
+  };
+
+  const handleDelete = async (task: Task) => {
+    const supabase = createClient();
+    const { error } = await supabase.from("Task").delete().eq("id", task.id);
+
+    if (!error) {
+      toast.success("Task deleted successfully");
+      fetchTasks();
+      fetchCompletedTasks();
+    }
+  };
 
   const handleComplete = async (task: Task) => {
     const supabase = createClient();
-  
+
     // Step 1: Check if the task has a prerequisite task and if it is completed
     if (task.prerequisiteTaskId) {
-      const { data: prerequisiteTask, error: prerequisiteError } = await supabase
-        .from('Task')
-        .select('id, isDone')
-        .eq('id', task.prerequisiteTaskId)
-        .single();
-  
+      const { data: prerequisiteTask, error: prerequisiteError } =
+        await supabase
+          .from("Task")
+          .select("id, isDone")
+          .eq("id", task.prerequisiteTaskId)
+          .single();
+
       if (prerequisiteError) {
-        toast.error('Error fetching prerequisite task');
+        toast.error("Error fetching prerequisite task");
         return;
       }
-  
+
       if (!prerequisiteTask?.isDone) {
-        toast.error(`Please complete the prerequisite task before completing ${task.title}`);
+        toast.error(
+          `Please complete the prerequisite task before completing ${task.title}`
+        );
         return;
       }
     }
-  
+
     // Step 2: Check if the task has subtasks and mark them as complete
     const { data: subtasks, error: subtaskError } = await supabase
-      .from('Task')
-      .select('id')
-      .eq('parentTaskId', task.id); // Assuming 'parentTaskId' is used to link subtasks
-  
+      .from("Task")
+      .select("id")
+      .eq("parentTaskId", task.id); // Assuming 'parentTaskId' is used to link subtasks
+
     if (subtaskError) {
-      toast.error('Error fetching subtasks');
+      toast.error("Error fetching subtasks");
       return;
     }
-  
+
     if (subtasks && subtasks.length > 0) {
       // Mark all subtasks as complete
       const { error: updateSubtasksError } = await supabase
-        .from('Task')
+        .from("Task")
         .update({ isDone: true, finishDate: new Date() })
-        .in('id', subtasks.map((subtask) => subtask.id));
-  
+        .in(
+          "id",
+          subtasks.map((subtask) => subtask.id)
+        );
+
       if (updateSubtasksError) {
-        toast.error('Error completing subtasks');
+        toast.error("Error completing subtasks");
         return;
       }
     }
-  
+
     // Step 3: Mark the current task as complete
     const { error } = await supabase
-      .from('Task')
+      .from("Task")
       .update({
         isDone: true,
-        finishDate: new Date()
+        finishDate: new Date(),
       })
-      .eq('id', task.id);
-  
+      .eq("id", task.id);
+
     if (!error) {
-      toast.success('Task marked complete');
+      toast.success("Task marked complete");
       fetchTasks();
-      fetchArchivedTasks()
+      fetchArchivedTasks();
       fetchCompletedTasks();
     } else {
-      toast.error('Error completing task');
+      toast.error("Error completing task");
     }
   };
-  
-  
 
-  const handleUndoComplete = async(task: Task) => {
-    const supabase = createClient()
-    const {error} = await supabase
-    .from('Task')
-    .update({
-      'isDone': false,
-      'finishDate': null
-    })
-    .eq('id', task.id)
+  const handleUndoComplete = async (task: Task) => {
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("Task")
+      .update({
+        isDone: false,
+        finishDate: null,
+      })
+      .eq("id", task.id);
 
-    if(!error) {
-      toast.success('Task undoed')
-      fetchTasks()
-      fetchCompletedTasks()
+    if (!error) {
+      toast.success("Task undoed");
+      fetchTasks();
+      fetchCompletedTasks();
     }
-  }
+  };
 
   const handleOpenChange = async (open: boolean) => {
     if (!open) {
-      fetchTasks()
-      fetchCompletedTasks()
-      fetchArchivedTasks()
-
+      fetchTasks();
+      fetchCompletedTasks();
+      fetchArchivedTasks();
     }
-  }
+  };
 
   useEffect(() => {
-    fetchTasks()
-    fetchCompletedTasks()
-    fetchArchivedTasks()
-  }, [])
+    fetchTasks();
+    fetchCompletedTasks();
+    fetchArchivedTasks();
+  }, []);
 
   const getTaskIcon = (type: TaskType) => {
     switch (type) {
-      case 'MEDICATION':
-        return <Pill className="h-4 w-4" />
-      case 'APPOINTMENT':
-        return <Stethoscope className="h-4 w-4" />
-      case 'JOURNAL': 
-        return <BookOpen className="h-4 w-4" />
-      case 'TREATMENT': 
-        return <Cross className="h-4 w-4" />
+      case "MEDICATION":
+        return <Pill className="h-4 w-4" />;
+      case "APPOINTMENT":
+        return <Stethoscope className="h-4 w-4" />;
+      case "JOURNAL":
+        return <BookOpen className="h-4 w-4" />;
+      case "TREATMENT":
+        return <Cross className="h-4 w-4" />;
       default:
-        return <Clock className="h-4 w-4" />
+        return <Clock className="h-4 w-4" />;
     }
-  }
-
+  };
 
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center space-x-4">
           <h1 className="text-2xl font-bold">Dashboard</h1>
-          
+
           <Dialog onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
               <Button>Add Task</Button>
@@ -220,7 +237,9 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) =>  {
             <DialogContent className="h-4/5 overflow-y-auto w-11/12">
               <DialogHeader>
                 <DialogTitle>Add New Task</DialogTitle>
-                <DialogDescription>Choose a task type and fill in the details.</DialogDescription>
+                <DialogDescription>
+                  Choose a task type and fill in the details.
+                </DialogDescription>
               </DialogHeader>
               <div className="space-y-6 py-4">
                 <div className="space-y-4">
@@ -229,7 +248,7 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) =>  {
                     {Object.values(TaskType).map((type) => (
                       <Button
                         key={type}
-                        variant={addTaskType === type ? 'default' : 'outline'}
+                        variant={addTaskType === type ? "default" : "outline"}
                         onClick={() => setAddTaskType(type)}
                         className="w-full"
                       >
@@ -239,19 +258,28 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) =>  {
                   </div>
                 </div>
                 <Separator />
-                {addTaskType === TaskType.GENERAL && <GeneralTaskForm taskListId={taskListId} />}
-                {addTaskType === TaskType.APPOINTMENT && <AppointmentTaskForm taskListId={taskListId} />}
-                {addTaskType === TaskType.MEDICATION && <MedicationTaskForm taskListId={taskListId} />}
-                {addTaskType === TaskType.TREATMENT && <TreatmentTaskForm taskListId={taskListId} />}
-                {addTaskType === TaskType.EXERCISE && <ExerciseTaskForm taskListId={taskListId} />}
-                
+                {addTaskType === TaskType.GENERAL && (
+                  <GeneralTaskForm taskListId={taskListId} />
+                )}
+                {addTaskType === TaskType.APPOINTMENT && (
+                  <AppointmentTaskForm taskListId={taskListId} />
+                )}
+                {addTaskType === TaskType.MEDICATION && (
+                  <MedicationTaskForm taskListId={taskListId} />
+                )}
+                {addTaskType === TaskType.TREATMENT && (
+                  <TreatmentTaskForm taskListId={taskListId} />
+                )}
+                {addTaskType === TaskType.EXERCISE && (
+                  <ExerciseTaskForm taskListId={taskListId} />
+                )}
               </div>
             </DialogContent>
           </Dialog>
 
           <Sheet onOpenChange={handleOpenChange}>
             <SheetTrigger asChild>
-              <Button variant='outline'>View Completed Tasks</Button>
+              <Button variant="outline">View Completed Tasks</Button>
             </SheetTrigger>
             <SheetContent>
               <SheetHeader>
@@ -274,7 +302,7 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) =>  {
 
           <Sheet onOpenChange={handleOpenChange}>
             <SheetTrigger asChild>
-              <Button variant='outline'>View Archived Tasks</Button>
+              <Button variant="outline">View Archived Tasks</Button>
             </SheetTrigger>
             <SheetContent>
               <SheetHeader>
@@ -310,24 +338,22 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) =>  {
             </DialogContent>
           </Dialog>
         </div>
-          <Dialog onOpenChange={handleOpenChange}>
-            <DialogTrigger asChild>
+        <Dialog onOpenChange={handleOpenChange}>
+          <DialogTrigger asChild>
             <Button variant="outline">
               <User className="mr-2 h-4 w-4" />
               Invite to Task List
             </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Manage User Permissions</DialogTitle>
-              </DialogHeader>
-              <div className="p-4 max-h-[90vh] overflow-y-auto">
-                <ListMemberForm taskListId={taskListId}/>
-              </div>
-            </DialogContent>
-          </Dialog>
-          
-
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Manage User Permissions</DialogTitle>
+            </DialogHeader>
+            <div className="p-4 max-h-[90vh] overflow-y-auto">
+              <ListMemberForm taskListId={taskListId} />
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 h-[calc(100vh-120px)]">
@@ -338,25 +364,24 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) =>  {
               <h2 className="font-semibold text-lg">{type}</h2>
             </div>
             <div className="space-y-4">
-            {tasks
-              .filter((task) => task.type === type)
-              .map((task) => (
-                
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  onDelete={handleDelete}
-                  onComplete={handleComplete}
-                  onOpenChange={handleOpenChange}
-                  onTagDelete={handleTaskTagDelete}
-                />
-              ))}
+              {tasks
+                .filter((task) => task.type === type)
+                .map((task) => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    onDelete={handleDelete}
+                    onComplete={handleComplete}
+                    onOpenChange={handleOpenChange}
+                    onTagDelete={handleTaskTagDelete}
+                  />
+                ))}
             </div>
           </div>
         ))}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default PatientTaskListPage
+export default PatientTaskListPage;

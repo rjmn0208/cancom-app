@@ -1,11 +1,11 @@
-import Link from 'next/link'
-import React from 'react'
+import Link from "next/link";
+import React from "react";
 
 const Page = () => {
   return (
     <div>
       <Link href="" className="block text-lg font-semibold">
-            Dashboard
+        Dashboard
       </Link>
       <Link
         href="/patient"
@@ -31,8 +31,8 @@ const Page = () => {
       >
         Vitals Log
       </Link>
-</div>
-  )
-}
+    </div>
+  );
+};
 
-export default Page
+export default Page;

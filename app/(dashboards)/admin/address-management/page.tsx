@@ -1,54 +1,63 @@
-'use client'
+"use client";
 
-
-
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Address } from '@/lib/types'
-import { createClient } from '@/utils/supabase/client'
-import { Pencil, Trash2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Address } from "@/lib/types";
+import { createClient } from "@/utils/supabase/client";
+import { Pencil, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 const AddressManagementPage = () => {
-  const [addresses, setAddresses] = useState<Address[]>([])
+  const [addresses, setAddresses] = useState<Address[]>([]);
 
   const fetchAddresses = async () => {
-    const supabase = createClient()
-    const {data, error} = await supabase
-    .from('Address')
-    .select('*, User(*)')
+    const supabase = createClient();
+    const { data, error } = await supabase.from("Address").select("*, User(*)");
 
-    if(!error) setAddresses(data)
-  }
+    if (!error) setAddresses(data);
+  };
 
   const handleOpenChange = async (open: boolean) => {
-    if(!open){
-      fetchAddresses()
+    if (!open) {
+      fetchAddresses();
     }
-  }
+  };
 
   const handleAddressDelete = async (address: Address) => {
-    const supabase = createClient()
-    const {data, error} = await supabase
-    .from('Address')
-    .delete()
-    .eq('id', address.id)
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("Address")
+      .delete()
+      .eq("id", address.id);
 
-    fetchAddresses()
-  }
+    fetchAddresses();
+  };
   useEffect(() => {
-    fetchAddresses()
-  }, [])
-  
+    fetchAddresses();
+  }, []);
+
   return (
     <div>
       <div>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead >ID</TableHead>
+              <TableHead>ID</TableHead>
               <TableHead>User</TableHead>
               <TableHead>Address Line One</TableHead>
               <TableHead>Address Line Two</TableHead>
@@ -63,8 +72,11 @@ const AddressManagementPage = () => {
             {addresses?.map((address: Address) => (
               <TableRow key={address.id}>
                 <TableCell>{address.id}</TableCell>
-                <TableCell> 
-                  <div>{address.User?.firstName} {address.User?.middleName} {address.User?.lastName}</div>
+                <TableCell>
+                  <div>
+                    {address.User?.firstName} {address.User?.middleName}{" "}
+                    {address.User?.lastName}
+                  </div>
                   <Badge>{address.User.userType}</Badge>
                 </TableCell>
                 <TableCell>{address.addressLineOne}</TableCell>
@@ -75,19 +87,23 @@ const AddressManagementPage = () => {
                 <TableCell>{address.country}</TableCell>
                 <TableCell>
                   <div className="flex space-x-2">
-                    <Dialog onOpenChange={(open) => handleOpenChange(open)}>                        
+                    <Dialog onOpenChange={(open) => handleOpenChange(open)}>
                       <DialogTrigger asChild>
-                      <Button variant="outline" size="icon">
-                        <Pencil className="h-4 w-4" />
-                      </Button>
+                        <Button variant="outline" size="icon">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
                       </DialogTrigger>
                       <DialogContent>
-                        <DialogHeader>  
+                        <DialogHeader>
                           <DialogTitle>Input Address Details</DialogTitle>
                         </DialogHeader>
                       </DialogContent>
                     </Dialog>
-                    <Button variant="outline" size="icon" onClick={() => handleAddressDelete(address)}>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handleAddressDelete(address)}
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -96,9 +112,9 @@ const AddressManagementPage = () => {
             ))}
           </TableBody>
         </Table>
-        </div>
+      </div>
     </div>
-  )
-}
+  );
+};
 
-export default AddressManagementPage
+export default AddressManagementPage;

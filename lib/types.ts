@@ -84,10 +84,17 @@ export interface VitalReading {
 export interface Patient {
   id: number;
   userId: string;
-  cancerType: string;
+  cancerTypeId: string;
   cancerStage: CancerStage;
   diagnosisDate: Date;
+
   User: User;
+  CancerType: CancerType
+}
+
+export interface CancerType {
+  id: number;
+  name: string;
 }
 
 export interface User {
@@ -124,7 +131,6 @@ export interface MedicalStaff {
 export interface Caretaker {
   id: number,
   userId: string,
-  relationshipToPatient: Relationship
   qualifications: string
 
   User: User
@@ -245,26 +251,4 @@ export interface ListMembership{
   endDate: Date
 
   User: User
-  TaskList: TaskList
-}
-
-export interface MedicalInstitution {
-  id: number;
-  name: string;
-  phone: string;
-  addressId: number;
-
-  Address: Address
-}
-
-export interface TaskTag {
-  id: number;
-  taskId: number;
-  value: string;
-  color: string;
-  createdBy: string;
-  createdAt: Date
-
-  CreatedBy: User
-  Task: Task
-}
+  Ta

@@ -1,8 +1,14 @@
-'use client'
+"use client";
 
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -11,56 +17,60 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import VitalReadingForm from '@/components/VitalReadingForm'
+} from "@/components/ui/table";
+import VitalReadingForm from "@/components/VitalReadingForm";
 
-import { VitalReading,  } from '@/lib/types'
-import { createClient } from '@/utils/supabase/client'
-import React, { useEffect, useState } from 'react'
+import { VitalReading } from "@/lib/types";
+import { createClient } from "@/utils/supabase/client";
+import React, { useEffect, useState } from "react";
 
 const VitalsReadingPage = () => {
-  const [readings, setReadings] = useState<VitalReading[]>()
+  const [readings, setReadings] = useState<VitalReading[]>();
 
   const fetchVitalReadings = async () => {
     const supabase = createClient();
-    const {data: {user}} = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     const { data, error } = await supabase
-    .from('VitalReading')
-    .select(`
+      .from("VitalReading")
+      .select(
+        `
       *, 
       Vitals(*),
       Patient(*, 
         User(*)),
       RecordedBy: User!VitalsReading_recordedBy_fkey(*),
       LastEditedBy: User!VitalReading_lastEditedBy_fkey(*)
-    `)
-    .eq('recordedBy', user?.id)
-    
-    console.log(data, error)
+    `,
+      )
+      .eq("recordedBy", user?.id);
+
+    console.log(data, error);
 
     if (!error) setReadings(data);
-  }
-  
-  const handleDelete = async(vitalReading: VitalReading) => {
-    const supabase = createClient();
-    const {data, error} = await supabase
-      .from('VitalReading')
-      .delete()
-      .eq('id', vitalReading.id)
+  };
 
-    await fetchVitalReadings()
-  }
+  const handleDelete = async (vitalReading: VitalReading) => {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("VitalReading")
+      .delete()
+      .eq("id", vitalReading.id);
+
+    await fetchVitalReadings();
+  };
 
   const handleOpenChange = async (open: boolean) => {
-    if (!open) fetchVitalReadings()
-  }
+    if (!open) fetchVitalReadings();
+  };
 
   useEffect(() => {
-    fetchVitalReadings()
-  },[])
+    fetchVitalReadings();
+  }, []);
 
-  if(!readings) return <div>Loading....</div>
+  if (!readings) return <div>Loading....</div>;
 
   return (
     <div>
@@ -71,7 +81,7 @@ const VitalsReadingPage = () => {
             <Button>Add Vital Reading</Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>  
+            <DialogHeader>
               <DialogTitle>Input Vital Reading Details</DialogTitle>
             </DialogHeader>
             <VitalReadingForm />
@@ -97,46 +107,62 @@ const VitalsReadingPage = () => {
             <TableRow>
               <TableCell>{reading.id}</TableCell>
               <TableCell>
-                {reading.Patient.User.firstName} {reading.Patient.User.middleName} {reading.Patient.User.lastName}
+                {reading.Patient.User.firstName}{" "}
+                {reading.Patient.User.middleName}{" "}
+                {reading.Patient.User.lastName}
               </TableCell>
               <TableCell>
-                <p>{reading.RecordedBy.firstName} {reading.RecordedBy.middleName} {reading.RecordedBy.lastName}</p>
+                <p>
+                  {reading.RecordedBy.firstName} {reading.RecordedBy.middleName}{" "}
+                  {reading.RecordedBy.lastName}
+                </p>
                 <Badge>{reading.RecordedBy.userType}</Badge>
               </TableCell>
               <TableCell>{reading.Vitals.name}</TableCell>
-              <TableCell>{reading.value} {reading.Vitals.unitOfMeasure}</TableCell>
-              <TableCell>{new Date(reading.timestamp).toLocaleString(undefined, {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          hour12: true
-                        })}</TableCell>
               <TableCell>
-                {reading.LastEditedBy.firstName} {reading.LastEditedBy.middleName} {reading.LastEditedBy.lastName}
+                {reading.value} {reading.Vitals.unitOfMeasure}
               </TableCell>
               <TableCell>
-              <Dialog onOpenChange={handleOpenChange}>
-                <DialogTrigger asChild>
-                  <Button variant={'outline'}>Edit</Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>  
-                    <DialogTitle>Input Vital Reading Details</DialogTitle>
-                  </DialogHeader>
-                  <VitalReadingForm vitalReading={reading}/>
-                </DialogContent>
-              </Dialog>
-              <Button variant={'destructive'} className='mt-2' onClick={() => handleDelete(reading)}>Delete</Button>
+                {new Date(reading.timestamp).toLocaleString(undefined, {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: true,
+                })}
+              </TableCell>
+              <TableCell>
+                {reading.LastEditedBy.firstName}{" "}
+                {reading.LastEditedBy.middleName}{" "}
+                {reading.LastEditedBy.lastName}
+              </TableCell>
+              <TableCell>
+                <Dialog onOpenChange={handleOpenChange}>
+                  <DialogTrigger asChild>
+                    <Button variant={"outline"}>Edit</Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Input Vital Reading Details</DialogTitle>
+                    </DialogHeader>
+                    <VitalReadingForm vitalReading={reading} />
+                  </DialogContent>
+                </Dialog>
+                <Button
+                  variant={"destructive"}
+                  className="mt-2"
+                  onClick={() => handleDelete(reading)}
+                >
+                  Delete
+                </Button>
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
-      
     </div>
-  )
-}
+  );
+};
 
-export default VitalsReadingPage
+export default VitalsReadingPage;

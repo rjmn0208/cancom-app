@@ -1,132 +1,148 @@
-'use client'
+"use client";
 
-import { z } from "zod"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "./ui/form"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
-import { Button } from "./ui/button"
-import { format } from "date-fns"
-import { createClient } from "@/utils/supabase/client"
-import { Task, TaskType } from "@/lib/types"
-import { Input } from "./ui/input"
-import { Textarea } from "./ui/textarea"
-import { Checkbox } from "./ui/checkbox"
-import { useEffect, useState } from "react"
-import { toast } from "sonner"
+import { z } from "zod";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "./ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+import { Button } from "./ui/button";
+import { format } from "date-fns";
+import { createClient } from "@/utils/supabase/client";
+import { Task, TaskType } from "@/lib/types";
+import { Input } from "./ui/input";
+import { Textarea } from "./ui/textarea";
+import { Checkbox } from "./ui/checkbox";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
-  priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).nullable(),
+  priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]).nullable(),
   dueDate: z.date().nullable(),
   isDone: z.boolean(),
   isArchived: z.boolean(),
   prerequisiteTaskId: z.number().nullable(),
-  parentTaskId: z.number().nullable()
-})
-type FormSchemaType = z.infer<typeof formSchema>
+  parentTaskId: z.number().nullable(),
+});
+type FormSchemaType = z.infer<typeof formSchema>;
 
 interface TaskFormProps {
-  task?: Partial<Task>
-  taskListId?: number
-} 
-
-const validateDueDate = (dueDate: Date) => {
-  return dueDate < new Date() ? 'Due date must be after the current date' : null
+  task?: Partial<Task>;
+  taskListId?: number;
 }
 
-const GeneralTaskForm: React.FC<TaskFormProps>= ({task, taskListId}) => {
-  const [tasks, setTasks] = useState<Task[]>([])
+const validateDueDate = (dueDate: Date) => {
+  return dueDate < new Date()
+    ? "Due date must be after the current date"
+    : null;
+};
+
+const GeneralTaskForm: React.FC<TaskFormProps> = ({ task, taskListId }) => {
+  const [tasks, setTasks] = useState<Task[]>([]);
 
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
-    defaultValues: task 
+    defaultValues: task
       ? {
           title: task.title,
           description: task.description,
           priority: task.priority,
-          dueDate: (task.dueDate) ? new Date(task.dueDate): null,
+          dueDate: task.dueDate ? new Date(task.dueDate) : null,
           isDone: task.isDone,
-          isArchived: task.isArchived,  
+          isArchived: task.isArchived,
           prerequisiteTaskId: task.prerequisiteTaskId,
           parentTaskId: task.parentTaskId,
-        } 
+        }
       : {
-          title: '',
-          description: '',
+          title: "",
+          description: "",
           priority: null,
           dueDate: null,
           isDone: false,
           isArchived: false,
           prerequisiteTaskId: null,
-          parentTaskId: null,  
-        }
-  })
+          parentTaskId: null,
+        },
+  });
 
   const fetchTasks = async () => {
-    const supabase = createClient()
+    const supabase = createClient();
 
-    const {data, error} = await supabase 
-    .from('Task')
-    .select('*')
-    .eq('taskListId', (taskListId) ? taskListId: task?.taskListId)
-    .eq('isDone', false)
+    const { data, error } = await supabase
+      .from("Task")
+      .select("*")
+      .eq("taskListId", taskListId ? taskListId : task?.taskListId)
+      .eq("isDone", false);
 
-    if(!error) setTasks(data)
-  }
+    if (!error) setTasks(data);
+  };
 
   const onSubmit = async (values: FormSchemaType) => {
-    const supabase = createClient()
-    if(values.dueDate) {
-      const validationError = validateDueDate(values?.dueDate)
+    const supabase = createClient();
+    if (values.dueDate) {
+      const validationError = validateDueDate(values?.dueDate);
       if (validationError && !task) {
-        toast.error(validationError)
-        return
+        toast.error(validationError);
+        return;
       }
     }
     if (task) {
       const { data, error } = await supabase
-        .from('Task')
+        .from("Task")
         .update(values)
-        .eq('id', task.id)
-        .select()
+        .eq("id", task.id)
+        .select();
       if (!error) {
-        toast.success('Task edited successfully')
+        toast.success("Task edited successfully");
       }
     } else {
-      const { data: { user } } = await supabase.auth.getUser()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       const { data, error } = await supabase
-        .from('Task')
+        .from("Task")
         .insert({
           ...values,
           type: TaskType.GENERAL,
           taskListId: taskListId,
-          taskCreator: user?.id
+          taskCreator: user?.id,
         })
-        .select()
+        .select();
 
-      console.log(error)
+      console.log(error);
       if (!error) {
-        toast.success('Task saved successfully')
+        toast.success("Task saved successfully");
       }
     }
-  }
+  };
 
   useEffect(() => {
     if (taskListId || task) {
       fetchTasks();
     }
   }, [taskListId, task]);
-  
 
-  
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}
-          name='title'
+          name="title"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Title</FormLabel>
@@ -139,7 +155,7 @@ const GeneralTaskForm: React.FC<TaskFormProps>= ({task, taskListId}) => {
         />
         <FormField
           control={form.control}
-          name='description'
+          name="description"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Description</FormLabel>
@@ -150,29 +166,32 @@ const GeneralTaskForm: React.FC<TaskFormProps>= ({task, taskListId}) => {
             </FormItem>
           )}
         />
-        <FormField 
+        <FormField
           control={form.control}
-          name='priority'
-          render={({ field }) => ( 
+          name="priority"
+          render={({ field }) => (
             <FormItem>
               <FormLabel>Priority</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value || ''}>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value || ""}
+              >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select priority"/>
+                    <SelectValue placeholder="Select priority" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].map((value) => (
+                  {["LOW", "MEDIUM", "HIGH", "CRITICAL"].map((value) => (
                     <SelectItem key={value} value={value}>
                       {value}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <FormMessage/>
+              <FormMessage />
             </FormItem>
-          )}  
+          )}
         />
         <FormField
           control={form.control}
@@ -181,14 +200,16 @@ const GeneralTaskForm: React.FC<TaskFormProps>= ({task, taskListId}) => {
             <FormItem>
               <FormLabel>Due Date</FormLabel>
               <FormControl>
-                <Input 
-                  type="datetime-local"  
+                <Input
+                  type="datetime-local"
                   {...field}
-                  value={(field.value) ? format(field.value, "yyyy-MM-dd'T'HH:mm") : ''}
+                  value={
+                    field.value ? format(field.value, "yyyy-MM-dd'T'HH:mm") : ""
+                  }
                   onChange={(e) => field.onChange(new Date(e.target.value))}
                 />
-              </FormControl>  
-              <FormMessage /> 
+              </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -205,12 +226,8 @@ const GeneralTaskForm: React.FC<TaskFormProps>= ({task, taskListId}) => {
                 />
               </FormControl>
               <div className="space-y-1 leading-none">
-                <FormLabel>
-                  Done
-                </FormLabel>
-                <FormDescription>
-                  Mark this task as completed
-                </FormDescription>
+                <FormLabel>Done</FormLabel>
+                <FormDescription>Mark this task as completed</FormDescription>
               </div>
             </FormItem>
           )}
@@ -227,29 +244,27 @@ const GeneralTaskForm: React.FC<TaskFormProps>= ({task, taskListId}) => {
                 />
               </FormControl>
               <div className="space-y-1 leading-none">
-                <FormLabel>
-                  Archived
-                </FormLabel>
-                <FormDescription>
-                  Mark this task as archived
-                </FormDescription>
+                <FormLabel>Archived</FormLabel>
+                <FormDescription>Mark this task as archived</FormDescription>
               </div>
             </FormItem>
           )}
         />
         <FormField
           control={form.control}
-          name='prerequisiteTaskId'
+          name="prerequisiteTaskId"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Prerequisite Task</FormLabel>
-              <Select 
-                onValueChange={(value) => field.onChange(value ? Number(value) : null)}
+              <Select
+                onValueChange={(value) =>
+                  field.onChange(value ? Number(value) : null)
+                }
                 defaultValue={field.value?.toString() || ""}
               >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select Prerequisite Task" />                  
+                    <SelectValue placeholder="Select Prerequisite Task" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -266,17 +281,19 @@ const GeneralTaskForm: React.FC<TaskFormProps>= ({task, taskListId}) => {
         />
         <FormField
           control={form.control}
-          name='parentTaskId'
+          name="parentTaskId"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Parent Task</FormLabel>
-              <Select 
-                onValueChange={(value) => field.onChange(value ? Number(value) : null)}
+              <Select
+                onValueChange={(value) =>
+                  field.onChange(value ? Number(value) : null)
+                }
                 defaultValue={field.value?.toString() || ""}
               >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select Parent Task" />                  
+                    <SelectValue placeholder="Select Parent Task" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -288,7 +305,8 @@ const GeneralTaskForm: React.FC<TaskFormProps>= ({task, taskListId}) => {
                 </SelectContent>
               </Select>
               <FormDescription>
-                Select a task to set this one as its subtask. Leave blank if this task has no parent.
+                Select a task to set this one as its subtask. Leave blank if
+                this task has no parent.
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -299,7 +317,7 @@ const GeneralTaskForm: React.FC<TaskFormProps>= ({task, taskListId}) => {
         </Button>
       </form>
     </Form>
-  )
-}
+  );
+};
 
-export default GeneralTaskForm
+export default GeneralTaskForm;

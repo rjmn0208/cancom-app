@@ -3,7 +3,11 @@ import { Button } from "@/components/ui/button";
 import UserDetails from "@/components/UserDetails";
 import Link from "next/link";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <div className="flex h-screen">
       <aside className="w-64 bg-card p-6 border-r border-border flex flex-col">
@@ -47,7 +51,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           >
             Manage TaskLists
           </Link>
-
         </nav>
         <UserDetails />
       </aside>

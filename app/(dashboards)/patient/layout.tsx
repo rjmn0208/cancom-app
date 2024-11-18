@@ -4,8 +4,11 @@ import { signOutAction } from "@/app/auth/auth-actions";
 import UserEmail from "@/components/UserDetails";
 import UserDetails from "@/components/UserDetails";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <div className="flex h-screen">
       <aside className="w-64 bg-card p-6 border-r border-border flex flex-col">
@@ -37,9 +40,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           >
             Vitals Log
           </Link>
-          
         </nav>
-        
+
         <UserDetails />
       </aside>
       <main className="flex-1 p-10 overflow-auto">{children}</main>
