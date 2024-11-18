@@ -106,6 +106,12 @@ export interface User {
   gender: Gender;
   phone: string;
   userType: UserType;
+
+  Patient: Patient
+  Caretaker: Caretaker
+  Doctor: Doctor
+  MedicalStaff: MedicalStaff
+  Address: Address
 }
 
 

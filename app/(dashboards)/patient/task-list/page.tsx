@@ -58,6 +58,8 @@ const TaskListPage = () => {
       .from("TaskList")
       .insert([
         {
+          completedTasksCount: 0,
+          uncompletedTasksCount: 0,
           patientId: patientData.id,
         },
       ])

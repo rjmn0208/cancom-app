@@ -39,6 +39,8 @@ import {
 import UserForm from "@/components/UserForm";
 import AddressForm from "@/components/AddressForm";
 import PatientForm from "@/components/PatientForm";
+import CaretakerForm from "./CaretakerForm";
+import DoctorForm from "./DoctorForm";
 
 interface ProfileData {
   user: User;
@@ -75,7 +77,7 @@ export default function ProfilePage() {
     if (userData.userType === "PATIENT") {
       const { data: patient } = await supabase
         .from("Patient")
-        .select("*")
+        .select("*, CancerType(*)")
         .eq("userId", user.id)
         .single();
       patientData = patient;
@@ -161,9 +163,11 @@ export default function ProfilePage() {
                 </TabsContent>
 
                 <TabsContent value="role">
-                  <PatientForm patient={profileData.patient} />
+                  
+                  {patient && <PatientForm patient={profileData.patient} />}
+                  {caretaker && <CaretakerForm caretaker={profileData.caretaker}/>}
+                  {doctor && <DoctorForm doctor={profileData.doctor} />}
                 </TabsContent>
-
                 <TabsContent value="address">
                   <AddressForm address={profileData.address} />
                 </TabsContent>
@@ -233,7 +237,7 @@ export default function ProfilePage() {
                       <div className="text-sm font-medium text-muted-foreground">
                         Cancer Type
                       </div>
-                      <div>{patient.cancerType}</div>
+                      <div>{patient.CancerType.name}</div>
                     </div>
                     <div className="space-y-2">
                       <div className="text-sm font-medium text-muted-foreground">
