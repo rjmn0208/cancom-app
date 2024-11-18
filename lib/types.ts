@@ -251,4 +251,26 @@ export interface ListMembership{
   endDate: Date
 
   User: User
-  Ta
+  TaskList: TaskList
+}
+
+export interface MedicalInstitution {
+  id: number;
+  name: string;
+  phone: string;
+  addressId: number;
+
+  Address: Address
+}
+
+export interface TaskTag {
+  id: number;
+  taskId: number;
+  value: string;
+  color: string;
+  createdBy: string;
+  createdAt: Date
+
+  CreatedBy: User
+  Task: Task
+}
