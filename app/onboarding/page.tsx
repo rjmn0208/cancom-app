@@ -166,7 +166,6 @@ const OnboardingPage = () => {
         },
       ]);
 
-
     if (UserError) throw new Error(UserError.message);
 
     switch (values.userType) {
@@ -237,11 +236,13 @@ const OnboardingPage = () => {
           <CardContent>
             {currentPage === 1 && (
               <Form {...form}>
-                <form onSubmit={form.handleSubmit((data) => {
-                  onSubmit(data)
-                  setCurrentPage(2)
-                  setCurrentProgressBarValue(50)
-                })}>
+                <form
+                  onSubmit={form.handleSubmit((data) => {
+                    onSubmit(data);
+                    setCurrentPage(2);
+                    setCurrentProgressBarValue(50);
+                  })}
+                >
                   <div className="flex space-x-4">
                     <FormField
                       control={form.control}
@@ -264,7 +265,7 @@ const OnboardingPage = () => {
                                   <SelectItem key={value} value={value}>
                                     {value}
                                   </SelectItem>
-                                )
+                                ),
                               )}
                             </SelectContent>
                           </Select>
@@ -562,7 +563,7 @@ const OnboardingPage = () => {
                                       <p>{institution.Address.province}</p>
                                       <p>{institution.Address.country}</p>
                                     </SelectItem>
-                                  )
+                                  ),
                                 )}
                               </SelectContent>
                             </Select>

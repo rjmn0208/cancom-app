@@ -163,9 +163,10 @@ export default function ProfilePage() {
                 </TabsContent>
 
                 <TabsContent value="role">
-                  
                   {patient && <PatientForm patient={profileData.patient} />}
-                  {caretaker && <CaretakerForm caretaker={profileData.caretaker}/>}
+                  {caretaker && (
+                    <CaretakerForm caretaker={profileData.caretaker} />
+                  )}
                   {doctor && <DoctorForm doctor={profileData.doctor} />}
                 </TabsContent>
                 <TabsContent value="address">

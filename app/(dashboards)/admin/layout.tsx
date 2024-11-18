@@ -34,16 +34,22 @@ export default function DashboardLayout({
             User Management
           </Link>
           <Link
-            href="/admin/vitals-management"
+            href="/admin/vitalreadings"
             className="block text-muted-foreground hover:text-foreground transition-colors"
           >
-            Vitals and Vital Readings
+            Patient Vital Readings
           </Link>
           <Link
             href="/admin/tasklist-management"
             className="block text-muted-foreground hover:text-foreground transition-colors"
           >
             Manage TaskLists
+          </Link>
+          <Link
+            href="/admin/medical-values"
+            className="block text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Manage Medical Values
           </Link>
         </nav>
         <UserDetails />

@@ -1,4 +1,3 @@
-
 export enum CancerStage {
   STAGE_0 = "STAGE_0",
   STAGE_I = "STAGE_I",
@@ -42,16 +41,16 @@ export enum TaskType {
   MEDICATION = "MEDICATION",
   EXERCISE = "EXERCISE",
   APPOINTMENT = "APPOINTMENT",
-  TREATMENT = 'TREATMENT',
-  JOURNAL = 'JOURNAL'
+  TREATMENT = "TREATMENT",
+  JOURNAL = "JOURNAL",
 }
 
 export enum UserType {
   PATIENT = "PATIENT",
   CARETAKER = "CARETAKER",
   DOCTOR = "DOCTOR",
-  ADMIN = 'ADMIN',
-  MEDICAL_STAFF = 'MEDICAL_STAFF'
+  ADMIN = "ADMIN",
+  MEDICAL_STAFF = "MEDICAL_STAFF",
 }
 
 export enum Gender {
@@ -64,7 +63,7 @@ export interface Vitals {
   id: number;
   name: string;
   unitOfMeasure: string;
-  description: string
+  description: string;
 }
 
 export interface VitalReading {
@@ -89,7 +88,7 @@ export interface Patient {
   diagnosisDate: Date;
 
   User: User;
-  CancerType: CancerType
+  CancerType: CancerType;
 }
 
 export interface CancerType {
@@ -101,26 +100,25 @@ export interface User {
   id: string;
   honorific: Honorifics;
   firstName: string;
-  middleName: string; 
+  middleName: string;
   lastName: string;
   gender: Gender;
   phone: string;
   userType: UserType;
 
-  Patient: Patient
-  Caretaker: Caretaker
-  Doctor: Doctor
-  MedicalStaff: MedicalStaff
-  Address: Address
+  Patient: Patient;
+  Caretaker: Caretaker;
+  Doctor: Doctor;
+  MedicalStaff: MedicalStaff;
+  Address: Address;
 }
 
-
 export interface Doctor {
-  id: number,
-  userId: string,
-  licenseNumber: string,
+  id: number;
+  userId: string;
+  licenseNumber: string;
 
-  User: User
+  User: User;
 }
 
 export interface MedicalStaff {
@@ -128,22 +126,21 @@ export interface MedicalStaff {
   userId: string;
   medicalInstitutionId: number;
   designation: string;
-  staffLicenseNumber: string,
+  staffLicenseNumber: string;
 
-  MedicalInstitution: MedicalInstitution
-
+  MedicalInstitution: MedicalInstitution;
 }
 
 export interface Caretaker {
-  id: number,
-  userId: string,
-  qualifications: string
+  id: number;
+  userId: string;
+  qualifications: string;
 
-  User: User
+  User: User;
 }
 
 export interface Address {
-  id: number,
+  id: number;
   userId: string;
   addressLineOne: string;
   addressLineTwo: string;
@@ -151,14 +148,14 @@ export interface Address {
   province: string;
   postalCode: string;
   country: string;
-  type: AddressType
+  type: AddressType;
 
-  User: User
+  User: User;
 }
 
 export enum AddressType {
-  PERMANENT = 'PERMANENT',
-  CURRENT = 'CURRENT'
+  PERMANENT = "PERMANENT",
+  CURRENT = "CURRENT",
 }
 
 export interface Task {
@@ -173,22 +170,22 @@ export interface Task {
   finishDate?: Date; // /
   isDone: boolean; // /
   isArchived: boolean; // x
-  prerequisiteTaskId?: number; 
-  parentTaskId: number
+  prerequisiteTaskId?: number;
+  parentTaskId: number;
   taskCreator: string; // /
   lastModifiedOn: Date;
 
-  TaskTag: TaskTag[]
-  TaskCreator: User
-  PrerequisiteTask?: Task[]
+  TaskTag: TaskTag[];
+  TaskCreator: User;
+  PrerequisiteTask?: Task[];
   ParentTask: Task;
-  AppointmentTask: AppointmentTask[]
-  MedicationTask: MedicationTask[]
-  TreatmentTask: TreatmentTask[]
-  ExerciseTask: ExerciseTask[]
+  AppointmentTask: AppointmentTask[];
+  MedicationTask: MedicationTask[];
+  TreatmentTask: TreatmentTask[];
+  ExerciseTask: ExerciseTask[];
 }
 
-export interface AppointmentTask extends Task{
+export interface AppointmentTask extends Task {
   id: number;
   taskId: number;
   doctorId: number;
@@ -196,8 +193,8 @@ export interface AppointmentTask extends Task{
   purpose: string;
   doctorsNotes?: string; // assuming this can be optional
 
-  Doctor: Doctor
-  Task: Task
+  Doctor: Doctor;
+  Task: Task;
 }
 
 export interface ExerciseTask extends Task {
@@ -208,11 +205,11 @@ export interface ExerciseTask extends Task {
   reps: number;
   durationPerSet: number;
   durationPerRep: number;
-  
-  Task: Task
+
+  Task: Task;
 }
 
-export interface MedicationTask extends Task{
+export interface MedicationTask extends Task {
   id: number;
   taskId: number;
   medicineColor: string;
@@ -221,13 +218,12 @@ export interface MedicationTask extends Task{
   instructions?: string; // assuming this can be optional
   name: string;
   dosage: number;
-  cronExpression: string //figure ts out later
+  cronExpression: string; //figure ts out later
 
-
-  Task: Task
+  Task: Task;
 }
 
-export interface TreatmentTask extends Task{
+export interface TreatmentTask extends Task {
   id: number;
   taskId: number;
   medicalInstitutionId: number;
@@ -235,29 +231,28 @@ export interface TreatmentTask extends Task{
   date: Date;
   dosage?: number;
 
-  MedicalInstitution: MedicalInstitution
+  MedicalInstitution: MedicalInstitution;
 }
-
 
 export interface TaskList {
   id: number;
   completedTasksCount: number;
   uncompletedTasksCount: number;
-  patientId: number
+  patientId: number;
 
-  Patient: Patient
+  Patient: Patient;
 }
 
-export interface ListMembership{
+export interface ListMembership {
   id: number;
   userId: string;
   taskListId: number;
   permission: ListPermission;
-  startDate: Date
-  endDate: Date
+  startDate: Date;
+  endDate: Date;
 
-  User: User
-  TaskList: TaskList
+  User: User;
+  TaskList: TaskList;
 }
 
 export interface MedicalInstitution {
@@ -266,7 +261,7 @@ export interface MedicalInstitution {
   phone: string;
   addressId: number;
 
-  Address: Address
+  Address: Address;
 }
 
 export interface TaskTag {
@@ -275,8 +270,8 @@ export interface TaskTag {
   value: string;
   color: string;
   createdBy: string;
-  createdAt: Date
+  createdAt: Date;
 
-  CreatedBy: User
-  Task: Task
+  CreatedBy: User;
+  Task: Task;
 }
