@@ -27,6 +27,7 @@ import {
   Doctor,
   MedicalStaff,
   Address,
+  UserType,
 } from "@/lib/types";
 import { createClient } from "@/utils/supabase/client";
 import { Ellipsis, Pencil, Trash2 } from "lucide-react";
@@ -40,10 +41,12 @@ export default function UserManagement() {
     const { data, error } = await supabase
       .from("User")
       .select(
-        "*,Patient(*,CancerType(*)), Caretaker(*), Doctor(*), MedicalStaff(*,MedicalInstitution(*)), Address(*)",
+        "*,Patient(*,CancerType(*)), Caretaker(*), Doctor(*), MedicalStaff(*,MedicalInstitution(*)), Address(*)"
       );
-
+      
     if (!error) setUsers(data);
+    
+    console.log(data)
   };
 
   const handleUserDelete = async (user: User) => {
@@ -136,29 +139,22 @@ export default function UserManagement() {
                         </p>
                       </div>
 
-                      {user.Address && user.Address.length > 0 && (
+                      {user.Address && user.Address[0] && (
                         <div>
-                          <h3 className="font-semibold">Addresses</h3>
-                          {user.Address.map((address, index) => (
-                            <div key={address.id} className="mt-2">
-                              <p>
-                                Address {index + 1} ({address.type}):
-                              </p>
-                              <p>{address.addressLineOne}</p>
-                              {address.addressLineTwo && (
-                                <p>{address.addressLineTwo}</p>
-                              )}
-                              <p>
-                                {address.city}, {address.province}{" "}
-                                {address.postalCode}
-                              </p>
-                              <p>{address.country}</p>
-                            </div>
-                          ))}
+                          <h3 className="font-semibold">Address</h3>
+                          <p>{user.Address[0].addressLineOne}</p>
+                          {user.Address[0].addressLineTwo && <p>{user.Address[0].addressLineTwo}</p>}
+                          <p>
+                            {user.Address[0].city}, {user.Address[0].province}{" "}
+                            {user.Address[0].postalCode}
+                          </p>
+                          <p>{user.Address[0].country}</p>
+                          <p>{user.Address[0].type}</p>
                         </div>
                       )}
 
-                      {user.Patient && (
+
+                      {user.userType === UserType.PATIENT && (
                         <div>
                           <h3 className="font-semibold">Patient Information</h3>
                           <p>Cancer Type: {user.Patient.CancerType?.name}</p>
@@ -166,13 +162,13 @@ export default function UserManagement() {
                           <p>
                             Diagnosis Date:{" "}
                             {new Date(
-                              user.Patient.diagnosisDate,
+                              user.Patient.diagnosisDate
                             ).toLocaleDateString()}
                           </p>
                         </div>
                       )}
 
-                      {user.Caretaker && (
+                      {user.userType === UserType.CARETAKER && (
                         <div>
                           <h3 className="font-semibold">
                             Caretaker Information
@@ -181,14 +177,14 @@ export default function UserManagement() {
                         </div>
                       )}
 
-                      {user.Doctor && (
+                      {user.userType === UserType.DOCTOR && (
                         <div>
                           <h3 className="font-semibold">Doctor Information</h3>
                           <p>License Number: {user.Doctor.licenseNumber}</p>
                         </div>
                       )}
 
-                      {user.MedicalStaff && (
+                      {user.userType === UserType.MEDICAL_STAFF && (
                         <div>
                           <h3 className="font-semibold">
                             Medical Staff Information
