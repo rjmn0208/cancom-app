@@ -73,7 +73,7 @@ const VitalReadingForm: React.FC = () => {
   return (
     <div className="w-full max-w-[1200px] mx-auto px-4">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 bg-white rounded-lg p-6 shadow-sm">
+        <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Recorded By */}
             <FormField
@@ -134,7 +134,7 @@ const VitalReadingForm: React.FC = () => {
             onClick={() =>
               append({ date: "", heartRate: null, systolicBloodPressure: null, diastolicBloodPressure: null, spO2: null, temperature: null })
             }
-            className="mb-6"
+            className="mb-6 mt-6"
           >
             Add More Rows
           </Button>
