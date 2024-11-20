@@ -17,6 +17,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
+import { VitalReading } from "@/lib/types";
 
 
 const formSchema = z.object({
@@ -36,7 +37,12 @@ const formSchema = z.object({
 
 type FormSchemaType = z.infer<typeof formSchema>;
 
-const VitalReadingForm: React.FC = () => {
+
+interface VitalReadingFormProps {
+  vitalReading?: Partial<VitalReading>
+}
+
+const VitalReadingForm: React.FC<VitalReadingFormProps> = ({vitalReading}) => {
   const [users, setUsers] = useState<any[]>([]);
   const [patients, setPatients] = useState<any[]>([]);
 

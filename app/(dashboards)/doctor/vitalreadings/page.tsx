@@ -157,7 +157,7 @@ const VitalsReadingPage = () => {
                   Delete
                 </Button>
               </TableCell>
-            </TableRow>
+            </TableRow> 
           ))}
         </TableBody>
       </Table>
