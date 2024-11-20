@@ -49,7 +49,7 @@ const UserDetails = async () => {
       <CardHeader>
         <CardTitle>User</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="text-sm">
         <p>
           {userDetails?.firstName} {userDetails?.middleName}{" "}
           {userDetails?.lastName}

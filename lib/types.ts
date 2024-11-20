@@ -110,7 +110,7 @@ export interface User {
   Caretaker: Caretaker;
   Doctor: Doctor;
   MedicalStaff: MedicalStaff;
-  Address: Address;
+  Address: Address[];
 }
 
 export interface Doctor {
@@ -209,6 +209,12 @@ export interface ExerciseTask extends Task {
   Task: Task;
 }
 
+export type Time = {
+  hour: number;
+  minute: number;
+  period? : 'AM' | 'PM'
+}
+
 export interface MedicationTask extends Task {
   id: number;
   taskId: number;
@@ -218,9 +224,17 @@ export interface MedicationTask extends Task {
   instructions?: string; // assuming this can be optional
   name: string;
   dosage: number;
-  cronExpression: string; //figure ts out later
+  times: Time[];
 
   Task: Task;
+  MedicationTaskSchedules: MedicationTaskSchedule[]
+}
+
+export interface MedicationTaskSchedule {
+  id: number
+  medicationTaskId: number;
+  time: Time;
+  isTaken: boolean
 }
 
 export interface TreatmentTask extends Task {

@@ -1,7 +1,7 @@
 import { MedicationTask, Task, TaskType } from "@/lib/types";
 import { createClient } from "@/utils/supabase/client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 import {
   Form,
@@ -26,6 +26,15 @@ import {
   SelectValue,
 } from "./ui/select";
 import { useEffect, useState } from "react";
+import { X } from "lucide-react";
+
+
+const timeSchema = z.object({
+  hour: z.number().min(0).max(12), // Assuming a 12-hour format
+  minute: z.number().min(0).max(59),
+  period: z.enum(["AM", "PM"]).optional(),
+});
+
 
 const formSchema = z.object({
   //base task fields
@@ -43,14 +52,14 @@ const formSchema = z.object({
   instructions: z.string(),
   startDate: z.date().nullable(),
   endDate: z.date().nullable(),
-  cronExpression: z.string(),
+  times: z.array(timeSchema)
 });
 
 type FormSchemaType = z.infer<typeof formSchema>;
 
 interface MedicationTaskFormProps {
   medicationTask?: Partial<MedicationTask>;
-  taskListId?: number;
+  taskListId: number;
 }
 
 const validateDates = (medTask: FormSchemaType) => {
@@ -89,7 +98,8 @@ const MedicationTaskForm: React.FC<MedicationTaskFormProps> = ({
           endDate: medicationTask.endDate
             ? new Date(medicationTask.endDate)
             : null,
-          cronExpression: medicationTask.cronExpression,
+
+          times: medicationTask.times || [],
         }
       : {
           title: "",
@@ -106,9 +116,15 @@ const MedicationTaskForm: React.FC<MedicationTaskFormProps> = ({
           instructions: "",
           startDate: null,
           endDate: null,
-          cronExpression: "",
+          times: []
         },
   });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "times",
+  });
+
 
   const fetchTasks = async () => {
     const supabase = createClient();
@@ -157,7 +173,6 @@ const MedicationTaskForm: React.FC<MedicationTaskFormProps> = ({
           instructions: values.instructions,
           startDate: values.startDate,
           endDate: values.endDate,
-          cronExpression: values.cronExpression,
         })
         .eq("taskId", TaskData.id);
 
@@ -199,7 +214,6 @@ const MedicationTaskForm: React.FC<MedicationTaskFormProps> = ({
             instructions: values.instructions,
             startDate: values.startDate,
             endDate: values.endDate,
-            cronExpression: values.cronExpression,
           },
         ]);
 
@@ -405,35 +419,6 @@ const MedicationTaskForm: React.FC<MedicationTaskFormProps> = ({
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="cronExpression"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel {...field}>
-                Cron Expression (Set the frequency of the medication)
-              </FormLabel>
-              <FormControl>
-                <Input {...field} type="text" placeholder="* * * * *" />
-              </FormControl>
-              <FormDescription>
-                <div className="p-2">
-                  Enter a cron expression to set the frequency of the medication
-                  schedule.{" "}
-                </div>
-                <div className="p-2">
-                  Format: * * * * * (minute, hour, day of month, month, day of
-                  week).{" "}
-                </div>
-                <div className="p-2">
-                  Examples: "0 */4 * * *" for every 4 hours, "0 8,12,16 * * *"
-                  for 3 times a day at 8am, 12pm, 4pm.
-                </div>
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
         <FormField
           control={form.control}
@@ -497,6 +482,47 @@ const MedicationTaskForm: React.FC<MedicationTaskFormProps> = ({
             </FormItem>
           )}
         />
+
+        <FormLabel>Times:</FormLabel>
+          {fields.map((field, index) => (
+            <FormField
+              key={field.id}
+              control={form.control}
+              name={`times.${index}`}
+              render={({ field }) => (
+                <FormItem className="flex items-center space-x-2 mt-2">
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="time"
+                      placeholder="HH:mm"
+                    />
+                  </FormControl>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => remove(index)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </FormItem>
+              )}
+            />
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="mt-2"
+            onClick={() => append({
+              hour: 12,
+              minute: 0,
+              period: "AM"
+            })}
+          >
+            Add Time
+          </Button>
 
         <Button type="submit" className="w-full mt-4">
           Submit
