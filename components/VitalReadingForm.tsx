@@ -140,7 +140,7 @@ const VitalReadingForm: React.FC = () => {
           </Button>
 
           {/* Vital Readings Table */}
-          <div className="w-full overflow-x-auto rounded-lg border">
+          <div className="w-full overflow-y-auto rounded-lg border max-h-[400px]">
             <table className="w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
