@@ -17,7 +17,10 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import { VitalReading } from "@/lib/types";
+import { Patient, User, UserType, VitalReading } from "@/lib/types";
+import { jwtDecode } from "jwt-decode";
+import { readUserSession } from "@/utils/read-user-session";
+import { error } from "console";
 
 
 const formSchema = z.object({
@@ -26,14 +29,15 @@ const formSchema = z.object({
   vitalsData: z.array(
     z.object({
       date: z.string().nullable(),
-      heartRate: z.number().nullable(),
-      systolicBloodPressure: z.number().nullable(),
-      diastolicBloodPressure: z.number().nullable(),
-      spO2: z.number().nullable(),
-      temperature: z.number().nullable(),
+      heartRate: z.coerce.number().nullable(),
+      systolicBloodPressure: z.coerce.number().nullable(),
+      diastolicBloodPressure: z.coerce.number().nullable(),
+      spO2: z.coerce.number().nullable(),
+      temperature: z.coerce.number().nullable(),
     })
   ),
 });
+
 
 type FormSchemaType = z.infer<typeof formSchema>;
 
@@ -43,18 +47,36 @@ interface VitalReadingFormProps {
 }
 
 const VitalReadingForm: React.FC<VitalReadingFormProps> = ({vitalReading}) => {
-  const [users, setUsers] = useState<any[]>([]);
-  const [patients, setPatients] = useState<any[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [userType, setUserType] = useState<UserType>();
+
+
+  const fetchUserType = async () => {
+    const {
+      data: { session },
+    } = await readUserSession();
+    if (session) {
+      const accessToken = session.access_token;
+      const decodedToken: any = jwtDecode(accessToken);
+      setUserType(decodedToken.user_type as UserType);
+    }
+  };
+
 
   useEffect(() => {
     const fetchData = async () => {
       const supabase = createClient();
-      const { data: users } = await supabase.from("User").select("*");
-      const { data: patients } = await supabase.from("Patient").select("*");
-      setUsers(users || []);
-      setPatients(patients || []);
+
+      const { data: users, error: UserError } = await supabase.from("User").select("*");
+      if(!UserError) setUsers(users);
+
+      const { data: patients, error: PatientError} = await supabase.from("Patient").select("*, User(*)");
+      if(!PatientError) setPatients(patients);
     };
     fetchData();
+    fetchUserType();
+    
   }, []);
 
   const form = useForm<FormSchemaType>({
@@ -72,7 +94,7 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({vitalReading}) => {
   });
 
   const onSubmit = async (values: FormSchemaType) => {
-    console.log(values);
+    console.log('FormValues', values);
     toast.success("Vital Reading recorded successfully!");
   };
 
@@ -80,7 +102,7 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({vitalReading}) => {
     <div className="w-full max-w-[1200px] mx-auto px-4">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Recorded By */}
             <FormField
               control={form.control}
@@ -88,7 +110,7 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({vitalReading}) => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-lg">Recorded By</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={userType !== UserType.ADMIN}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select Recorder" />
@@ -114,16 +136,16 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({vitalReading}) => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-lg">Patient</FormLabel>
-                  <Select onValueChange={(value) => field.onChange(Number(value))} defaultValue={field.value?.toString()}>
+                  <Select onValueChange={(value) => field.onChange(Number(value))} defaultValue={field.value?.toString()} disabled={userType === UserType.PATIENT}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select Patient" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {patients.map((patient: any) => (
+                      {patients.map((patient: Patient) => (
                         <SelectItem key={patient.id} value={patient.id.toString()}>
-                          {patient.firstName} {patient.lastName}
+                          {patient.User.firstName} {patient.User.middleName} {patient.User?.lastName}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -166,6 +188,7 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({vitalReading}) => {
                         {...form.register(`vitalsData.${index}.date`)} 
                         type="datetime-local" 
                         className="w-full" 
+                        
                       />
                     </td>
                     <td className="px-4 py-3">
@@ -199,7 +222,7 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({vitalReading}) => {
                     <td className="px-4 py-3">
                       <Input 
                         {...form.register(`vitalsData.${index}.temperature`)} 
-                        type="number"
+                        type="float"
                         className="w-full" 
                       />
                     </td>
@@ -220,3 +243,4 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({vitalReading}) => {
 };
 
 export default VitalReadingForm;
+
