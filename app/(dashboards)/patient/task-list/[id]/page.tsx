@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Clock, Pill, Stethoscope, User, BookOpen, Cross } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Task, TaskTag, TaskType } from "@/lib/types";
+import { MedicationTaskSchedule, Task, TaskTag, TaskType } from "@/lib/types";
 import { createClient } from "@/utils/supabase/client";
 import {
   Dialog,
@@ -203,6 +203,43 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) => {
     }
   };
 
+  const handleMedTaskScheduleMarkTaken= async (sched: MedicationTaskSchedule) => {
+    const supabase = createClient()
+
+    const {data, error} = await supabase
+    .from('MedicationTaskSchedule')
+    .update({
+      isTaken: true
+    })
+    .eq('id', sched.id)
+    .select()
+    .single()
+
+    if(!error) {
+      toast.success(`Medicine Taken at ${data.time}`)
+      fetchTasks();
+      fetchArchivedTasks();
+      fetchCompletedTasks();
+    }
+  }
+
+  const handleMedTaskScheduleTakenDelete = async (sched: MedicationTaskSchedule) => {
+    const supabase = createClient()
+
+    const {data, error} = await supabase
+    .from('MedicationTaskSchedule')
+    .delete()
+    .eq('id', sched.id)
+    .single()
+    
+    if(!error) {
+      toast.success('Schedule delete successful')
+      fetchTasks();
+      fetchArchivedTasks();
+      fetchCompletedTasks();
+    }
+  }
+
   useEffect(() => {
     fetchTasks();
     fetchCompletedTasks();
@@ -295,6 +332,8 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) => {
                   onOpenChange={handleOpenChange}
                   onTagDelete={handleTaskTagDelete}
                   isCompleted={true}
+                  onMedScheduleMarkTaken={handleMedTaskScheduleMarkTaken}
+                  onMedScheduleDelete={handleMedTaskScheduleTakenDelete}
                 />
               ))}
             </SheetContent>
@@ -317,6 +356,8 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) => {
                   onUndoComplete={handleUndoComplete}
                   onTagDelete={handleTaskTagDelete}
                   onOpenChange={handleOpenChange}
+                  onMedScheduleMarkTaken={handleMedTaskScheduleMarkTaken}
+                  onMedScheduleDelete={handleMedTaskScheduleTakenDelete}
                 />
               ))}
             </SheetContent>
@@ -374,6 +415,8 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) => {
                     onComplete={handleComplete}
                     onOpenChange={handleOpenChange}
                     onTagDelete={handleTaskTagDelete}
+                    onMedScheduleMarkTaken={handleMedTaskScheduleMarkTaken}
+                    onMedScheduleDelete={handleMedTaskScheduleTakenDelete}
                   />
                 ))}
             </div>

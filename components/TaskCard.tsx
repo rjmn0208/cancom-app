@@ -64,6 +64,8 @@ interface TaskCardProps {
   onTagDelete: (tag: TaskTag) => void;
   onOpenChange: (open: boolean) => void;
   isCompleted?: boolean;
+  onMedScheduleMarkTaken: (sched: MedicationTaskSchedule) => void;
+  onMedScheduleDelete: (sched: MedicationTaskSchedule) => void;
 }
 
 export default function TaskCard({
@@ -74,6 +76,8 @@ export default function TaskCard({
   onOpenChange,
   isCompleted = false,
   onTagDelete,
+  onMedScheduleMarkTaken,
+  onMedScheduleDelete
 }: TaskCardProps) {
   const [subTasks, setSubTasks] = useState<Task[]>([]);
   const [prerequisites, setPrerequisites] = useState<Task[]>([]);
@@ -121,10 +125,6 @@ export default function TaskCard({
         return "bg-gray-500 text-black";
     }
   };
-
-  const handleTakenMedicine = async (sched: MedicationTaskSchedule) => {
-    const supabase = createClient
-  }
 
   const renderTaskTypeDetails = () => {
     switch (task.type) {
@@ -230,17 +230,24 @@ export default function TaskCard({
                 }
               )}
             </p>
-            <p className="text-sm opacity-70">
-              {task.MedicationTask[0].MedicationTaskSchedule.map((sched: MedicationTaskSchedule) => (
-                <div className="flex items-center space-x-2 space-y-2">
-                  <Checkbox key={sched.id} disabled={sched.isTaken}/>
+            <div className="space-y-2">
+              <h1 className='text-md font-semibold'>Medication Schedules:</h1>
+              {task.MedicationTask[0].MedicationTaskSchedule.map((sched) => (
+                <div key={sched.id} className="flex items-center space-x-2">
+                  <Checkbox 
+                    id={sched.id.toString()} 
+                    disabled={sched.isTaken} 
+                    onCheckedChange={() => onMedScheduleMarkTaken(sched)}
+                    />
                   <Label htmlFor={sched.id.toString()}>
-                  {format(new Date(`1970-01-01T${sched.time}`), "hh:mm a")}
+                    {format(new Date(`1970-01-01T${sched.time}`), "hh:mm a")}
                   </Label>
+                  <Button variant='ghost' size='icon' className="p-0 w-5 h-5 flex items-center justify-center" onClick={() => onMedScheduleDelete(sched)}>
+                    <X size={12} />
+                  </Button>
                 </div>
-               
               ))}
-            </p>
+            </div>
             {task.MedicationTask[0].instructions && (
               <p className="text-sm opacity-70">
                 Instructions: {task.MedicationTask[0].instructions}

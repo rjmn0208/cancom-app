@@ -28,13 +28,11 @@ import {
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 
-
 const timeSchema = z.object({
   hour: z.number().min(0).max(12), // Assuming a 12-hour format
   minute: z.number().min(0).max(59),
   period: z.enum(["AM", "PM"]).optional(),
 });
-
 
 const formSchema = z.object({
   //base task fields
@@ -52,15 +50,13 @@ const formSchema = z.object({
   instructions: z.string(),
   startDate: z.date().nullable(),
   endDate: z.date().nullable(),
-  times: z.array(timeSchema)
+  times: z.array(timeSchema),
 });
-
-
 
 type FormSchemaType = z.infer<typeof formSchema>;
 
 interface MedicationTaskFormProps {
-  medicationTask?: Partial<MedicationTask>; 
+  medicationTask?: Partial<MedicationTask>;
   taskListId?: number;
 }
 
@@ -118,14 +114,14 @@ const MedicationTaskForm: React.FC<MedicationTaskFormProps> = ({
           instructions: "",
           startDate: null,
           endDate: null,
-          times: []
+          times: [],
         },
   });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
-    name: "times"
-  })
+    name: "times",
+  });
 
   const fetchTasks = async () => {
     const supabase = createClient();
@@ -141,7 +137,7 @@ const MedicationTaskForm: React.FC<MedicationTaskFormProps> = ({
 
   const onSubmit = async (values: FormSchemaType) => {
     const supabase = createClient();
-    console.log(values)
+    console.log(values);
 
     const validationError = validateDates(values);
     if (validationError) {
@@ -179,6 +175,7 @@ const MedicationTaskForm: React.FC<MedicationTaskFormProps> = ({
         .eq("taskId", TaskData.id);
 
       if (!MedicationError) toast.success("Medication edited successfully");
+    
     } else {
       const {
         data: { user },
@@ -219,34 +216,35 @@ const MedicationTaskForm: React.FC<MedicationTaskFormProps> = ({
           },
         ])
         .select()
-        .single()
+        .single();
 
-        if(MedicationError) throw new Error(MedicationError.message)
+      if (MedicationError) throw new Error(MedicationError.message);
 
-          const schedules = values.times.map((time) => {
-            const hour = time.period === "PM" && time.hour !== 12 
-              ? time.hour + 12 
-              : time.period === "AM" && time.hour === 12 
-              ? 0 
+      const schedules = values.times.map((time) => {
+        const hour =
+          time.period === "PM" && time.hour !== 12
+            ? time.hour + 12
+            : time.period === "AM" && time.hour === 12
+              ? 0
               : time.hour;
-            const formattedTime = `${hour.toString().padStart(2, "0")}:${time.minute
-              .toString()
-              .padStart(2, "0")}:00`;
-            
-            return {
-              medicationTaskId: MedicationData?.id,
-              time: formattedTime,
-              isTaken: false,
-            };
-          });
-  
-        const { error: scheduleError } = await supabase
-          .from("MedicationTaskSchedule")
-          .insert(schedules)
-  
-        if (scheduleError) throw new Error(scheduleError.message)
-        
-        toast.success("Medication task created successfully")
+        const formattedTime = `${hour.toString().padStart(2, "0")}:${time.minute
+          .toString()
+          .padStart(2, "0")}:00`;
+
+        return {
+          medicationTaskId: MedicationData?.id,
+          time: formattedTime,
+          isTaken: false,
+        };
+      });
+
+      const { error: scheduleError } = await supabase
+        .from("MedicationTaskSchedule")
+        .insert(schedules);
+
+      if (scheduleError) throw new Error(scheduleError.message);
+
+      toast.success("Medication task created successfully");
     }
   };
 
@@ -357,9 +355,9 @@ const MedicationTaskForm: React.FC<MedicationTaskFormProps> = ({
           name="medicineColor"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Medicine Color:</FormLabel>
+              <FormLabel>Medicine Pill/Tablet Color:</FormLabel>
               <FormControl>
-                <Input {...field} type="text" />
+                <Input {...field} type="text" placeholder="Leave blank if medicine is not taken by tablet/pill"/>
               </FormControl>
               <FormDescription>
                 If the medicine has multiple colors, enter them separated by a
@@ -512,7 +510,7 @@ const MedicationTaskForm: React.FC<MedicationTaskFormProps> = ({
           )}
         />
 
-<div>
+        <div>
           <h3 className="text-lg font-medium">Medication Times</h3>
           {fields.map((field, index) => (
             <div key={field.id} className="flex items-end space-x-2 mt-2">
@@ -523,7 +521,13 @@ const MedicationTaskForm: React.FC<MedicationTaskFormProps> = ({
                   <FormItem>
                     <FormLabel>Hour</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value))} />
+                      <Input
+                        type="number"
+                        {...field}
+                        onChange={(e) =>
+                          field.onChange(parseInt(e.target.value))
+                        }
+                      />
                     </FormControl>
                   </FormItem>
                 )}
@@ -535,7 +539,13 @@ const MedicationTaskForm: React.FC<MedicationTaskFormProps> = ({
                   <FormItem>
                     <FormLabel>Minute</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value))} />
+                      <Input
+                        type="number"
+                        {...field}
+                        onChange={(e) =>
+                          field.onChange(parseInt(e.target.value))
+                        }
+                      />
                     </FormControl>
                   </FormItem>
                 )}
@@ -546,7 +556,10 @@ const MedicationTaskForm: React.FC<MedicationTaskFormProps> = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Period</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select period" />
@@ -560,12 +573,20 @@ const MedicationTaskForm: React.FC<MedicationTaskFormProps> = ({
                   </FormItem>
                 )}
               />
-              <Button type="button" variant="destructive" onClick={() => remove(index)}>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => remove(index)}
+              >
                 <X />
               </Button>
             </div>
           ))}
-          <Button type="button" onClick={() => append({ hour: 12, minute: 0, period: "PM" })} className="mt-2">
+          <Button
+            type="button"
+            onClick={() => append({ hour: 12, minute: 0, period: "PM" })}
+            className="mt-2"
+          >
             Add Time
           </Button>
         </div>
