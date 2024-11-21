@@ -28,15 +28,31 @@ const formSchema = z.object({
   patientId: z.number().nullable(),
   vitalsData: z.array(
     z.object({
-      date: z.string().nullable(),
-      heartRate: z.coerce.number().nullable(),
-      systolicBloodPressure: z.coerce.number().nullable(),
-      diastolicBloodPressure: z.coerce.number().nullable(),
-      spO2: z.coerce.number().nullable(),
-      temperature: z.coerce.number().nullable(),
+      date: z.string().nonempty("Date is required"), // Ensure a value is provided
+      heartRate: z.coerce.number()
+        .min(40, "Heart rate must be at least 40 bpm")
+        .max(200, "Heart rate cannot exceed 200 bpm")
+        .nullable(),
+      systolicBloodPressure: z.coerce.number()
+        .min(90, "Systolic BP must be at least 90 mmHg")
+        .max(200, "Systolic BP cannot exceed 200 mmHg")
+        .nullable(),
+      diastolicBloodPressure: z.coerce.number()
+        .min(60, "Diastolic BP must be at least 60 mmHg")
+        .max(120, "Diastolic BP cannot exceed 120 mmHg")
+        .nullable(),
+      spO2: z.coerce.number()
+        .min(0, "SPO2 must be at least 0%")
+        .max(100, "SPO2 cannot exceed 100%")
+        .nullable(),
+      temperature: z.coerce.number()
+        .min(30.0, "Temperature must be at least 30.0°C")
+        .max(45.0, "Temperature cannot exceed 45.0°C")
+        .nullable(),
     })
   ),
 });
+
 
 
 type FormSchemaType = z.infer<typeof formSchema>;
@@ -188,7 +204,6 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({vitalReading}) => {
                         {...form.register(`vitalsData.${index}.date`)} 
                         type="datetime-local" 
                         className="w-full" 
-                        
                       />
                     </td>
                     <td className="px-4 py-3">
@@ -222,7 +237,8 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({vitalReading}) => {
                     <td className="px-4 py-3">
                       <Input 
                         {...form.register(`vitalsData.${index}.temperature`)} 
-                        type="float"
+                        type="number"
+                        step="0.1"
                         className="w-full" 
                       />
                     </td>
