@@ -227,7 +227,7 @@ export interface MedicationTask extends Task {
   times: Time[];
 
   Task: Task;
-  MedicationTaskSchedules: MedicationTaskSchedule[]
+  MedicationTaskSchedule: MedicationTaskSchedule[]
 }
 
 export interface MedicationTaskSchedule {

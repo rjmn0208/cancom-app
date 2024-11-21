@@ -55,11 +55,13 @@ const formSchema = z.object({
   times: z.array(timeSchema)
 });
 
+
+
 type FormSchemaType = z.infer<typeof formSchema>;
 
 interface MedicationTaskFormProps {
-  medicationTask?: Partial<MedicationTask>;
-  taskListId: number;
+  medicationTask?: Partial<MedicationTask>; 
+  taskListId?: number;
 }
 
 const validateDates = (medTask: FormSchemaType) => {
@@ -122,9 +124,8 @@ const MedicationTaskForm: React.FC<MedicationTaskFormProps> = ({
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
-    name: "times",
-  });
-
+    name: "times"
+  })
 
   const fetchTasks = async () => {
     const supabase = createClient();
@@ -140,6 +141,7 @@ const MedicationTaskForm: React.FC<MedicationTaskFormProps> = ({
 
   const onSubmit = async (values: FormSchemaType) => {
     const supabase = createClient();
+    console.log(values)
 
     const validationError = validateDates(values);
     if (validationError) {
@@ -215,9 +217,36 @@ const MedicationTaskForm: React.FC<MedicationTaskFormProps> = ({
             startDate: values.startDate,
             endDate: values.endDate,
           },
-        ]);
+        ])
+        .select()
+        .single()
 
-      if (!MedicationError) toast.success("Medication saved successfully");
+        if(MedicationError) throw new Error(MedicationError.message)
+
+          const schedules = values.times.map((time) => {
+            const hour = time.period === "PM" && time.hour !== 12 
+              ? time.hour + 12 
+              : time.period === "AM" && time.hour === 12 
+              ? 0 
+              : time.hour;
+            const formattedTime = `${hour.toString().padStart(2, "0")}:${time.minute
+              .toString()
+              .padStart(2, "0")}:00`;
+            
+            return {
+              medicationTaskId: MedicationData?.id,
+              time: formattedTime,
+              isTaken: false,
+            };
+          });
+  
+        const { error: scheduleError } = await supabase
+          .from("MedicationTaskSchedule")
+          .insert(schedules)
+  
+        if (scheduleError) throw new Error(scheduleError.message)
+        
+        toast.success("Medication task created successfully")
     }
   };
 
@@ -483,46 +512,63 @@ const MedicationTaskForm: React.FC<MedicationTaskFormProps> = ({
           )}
         />
 
-        <FormLabel>Times:</FormLabel>
+<div>
+          <h3 className="text-lg font-medium">Medication Times</h3>
           {fields.map((field, index) => (
-            <FormField
-              key={field.id}
-              control={form.control}
-              name={`times.${index}`}
-              render={({ field }) => (
-                <FormItem className="flex items-center space-x-2 mt-2">
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type="time"
-                      placeholder="HH:mm"
-                    />
-                  </FormControl>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => remove(index)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </FormItem>
-              )}
-            />
+            <div key={field.id} className="flex items-end space-x-2 mt-2">
+              <FormField
+                control={form.control}
+                name={`times.${index}.hour`}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Hour</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value))} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={`times.${index}.minute`}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Minute</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value))} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={`times.${index}.period`}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Period</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select period" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="AM">AM</SelectItem>
+                        <SelectItem value="PM">PM</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+              <Button type="button" variant="destructive" onClick={() => remove(index)}>
+                <X />
+              </Button>
+            </div>
           ))}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="mt-2"
-            onClick={() => append({
-              hour: 12,
-              minute: 0,
-              period: "AM"
-            })}
-          >
+          <Button type="button" onClick={() => append({ hour: 12, minute: 0, period: "PM" })} className="mt-2">
             Add Time
           </Button>
+        </div>
 
         <Button type="submit" className="w-full mt-4">
           Submit

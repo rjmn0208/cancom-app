@@ -45,7 +45,7 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) => {
     const { data, error } = await supabase
       .from("Task")
       .select(
-        "*, TaskTag(*), TaskCreator: User(*),ExerciseTask(*), MedicationTask(*), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))",
+        "*, TaskTag(*), TaskCreator: User(*),ExerciseTask(*), MedicationTask(*,MedicationTaskSchedule(*)), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))"
       )
       .eq("taskListId", taskListId)
       .eq("isDone", false);
@@ -59,7 +59,7 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) => {
     const { data, error } = await supabase
       .from("Task")
       .select(
-        "*, TaskTag(*), TaskCreator: User(*), ExerciseTask(*), MedicationTask(*), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))",
+        "*, TaskTag(*), TaskCreator: User(*), ExerciseTask(*), MedicationTask(*,MedicationTaskSchedule(*)), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))"
       )
       .eq("taskListId", taskListId)
       .eq("isDone", true);
@@ -72,7 +72,7 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) => {
     const { data, error } = await supabase
       .from("Task")
       .select(
-        "*, TaskTag(*), TaskCreator: User(*), ExerciseTask (*), MedicationTask(*), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))",
+        "*, TaskTag(*), TaskCreator: User(*), ExerciseTask (*), MedicationTask(*,MedicationTaskSchedule(*)), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))"
       )
       .eq("taskListId", taskListId)
       .eq("isArchived", true)
@@ -126,7 +126,7 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) => {
 
       if (!prerequisiteTask?.isDone) {
         toast.error(
-          `Please complete the prerequisite task before completing ${task.title}`,
+          `Please complete the prerequisite task before completing ${task.title}`
         );
         return;
       }
@@ -150,7 +150,7 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) => {
         .update({ isDone: true, finishDate: new Date() })
         .in(
           "id",
-          subtasks.map((subtask) => subtask.id),
+          subtasks.map((subtask) => subtask.id)
         );
 
       if (updateSubtasksError) {

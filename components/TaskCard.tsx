@@ -7,6 +7,7 @@ import {
   TaskPriority,
   MedicationTask,
   TaskTag,
+  MedicationTaskSchedule,
 } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,6 +52,9 @@ import GeneralTaskForm from "./GeneralTaskForm";
 import { createClient } from "@/utils/supabase/client";
 import TaskTagForm from "./TaskTagForm";
 import { toast } from "sonner";
+import { Checkbox } from "./ui/checkbox";
+import { Label } from "./ui/label";
+import { format } from "date-fns";
 
 interface TaskCardProps {
   task: Task;
@@ -118,6 +122,10 @@ export default function TaskCard({
     }
   };
 
+  const handleTakenMedicine = async (sched: MedicationTaskSchedule) => {
+    const supabase = createClient
+  }
+
   const renderTaskTypeDetails = () => {
     switch (task.type) {
       case TaskType.APPOINTMENT:
@@ -144,7 +152,7 @@ export default function TaskCard({
                   hour: "2-digit",
                   minute: "2-digit",
                   hour12: true,
-                },
+                }
               )}
             </p>
             <p className="text-sm opacity-70">
@@ -207,7 +215,7 @@ export default function TaskCard({
                   hour: "2-digit",
                   minute: "2-digit",
                   hour12: true,
-                },
+                }
               )}{" "}
               -{" "}
               {new Date(task.MedicationTask[0].endDate).toLocaleString(
@@ -219,11 +227,19 @@ export default function TaskCard({
                   hour: "2-digit",
                   minute: "2-digit",
                   hour12: true,
-                },
+                }
               )}
             </p>
             <p className="text-sm opacity-70">
-              Cron Job: {task.MedicationTask[0].cronExpression}
+              {task.MedicationTask[0].MedicationTaskSchedule.map((sched: MedicationTaskSchedule) => (
+                <div className="flex items-center space-x-2 space-y-2">
+                  <Checkbox key={sched.id} disabled={sched.isTaken}/>
+                  <Label htmlFor={sched.id.toString()}>
+                  {format(new Date(`1970-01-01T${sched.time}`), "hh:mm a")}
+                  </Label>
+                </div>
+               
+              ))}
             </p>
             {task.MedicationTask[0].instructions && (
               <p className="text-sm opacity-70">
