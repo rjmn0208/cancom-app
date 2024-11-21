@@ -12,9 +12,9 @@ export default function DashboardLayout({
     <div className="flex h-screen">
       <aside className="w-64 bg-card p-6 border-r border-border flex flex-col">
         <nav className="space-y-4 flex-1">
-          <Link href="" className="block text-lg font-semibold">
+          <h1 className="block text-lg font-semibold">
             Dashboard
-          </Link>
+          </h1>
           <Link
             href="/caretaker"
             className="block text-muted-foreground hover:text-foreground transition-colors"
