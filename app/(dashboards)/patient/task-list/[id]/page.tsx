@@ -397,9 +397,10 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) => {
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 h-[calc(100vh-120px)]">
+      <div className="flex space-x-6 overflow-x-auto">
+        
         {Object.values(TaskType).map((type) => (
-          <div key={type} className="space-y-4">
+          <div key={type} className="w-[600px]">
             <div className="flex items-center space-x-2">
               {getTaskIcon(type)}
               <h2 className="font-semibold text-lg">{type}</h2>

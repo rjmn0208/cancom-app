@@ -237,6 +237,7 @@ export default function TaskCard({
                   <Checkbox 
                     id={sched.id.toString()} 
                     disabled={sched.isTaken} 
+                    checked={sched.isTaken}
                     onCheckedChange={() => onMedScheduleMarkTaken(sched)}
                     />
                   <Label htmlFor={sched.id.toString()}>
