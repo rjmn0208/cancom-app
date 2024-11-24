@@ -240,6 +240,28 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) => {
     }
   }
 
+
+  const handleMedTaskScheduleUndoTaken = async (sched: MedicationTaskSchedule) => {
+    const supabase = createClient()
+
+    const {data, error} = await supabase
+    .from('MedicationTaskSchedule')
+    .update({
+      isTaken: false
+    })
+    .eq('id', sched.id)
+    .select()
+    .single()
+
+
+    if(!error) {
+      toast.success(`Medicine taken undoed`)
+      fetchTasks();
+      fetchArchivedTasks();
+      fetchCompletedTasks();
+    }
+  }
+
   useEffect(() => {
     fetchTasks();
     fetchCompletedTasks();
@@ -334,6 +356,7 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) => {
                   isCompleted={true}
                   onMedScheduleMarkTaken={handleMedTaskScheduleMarkTaken}
                   onMedScheduleDelete={handleMedTaskScheduleTakenDelete}
+                  onMedScheduleUndoTaken={handleMedTaskScheduleUndoTaken}
                 />
               ))}
             </SheetContent>
@@ -358,6 +381,7 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) => {
                   onOpenChange={handleOpenChange}
                   onMedScheduleMarkTaken={handleMedTaskScheduleMarkTaken}
                   onMedScheduleDelete={handleMedTaskScheduleTakenDelete}
+                  onMedScheduleUndoTaken={handleMedTaskScheduleUndoTaken}
                 />
               ))}
             </SheetContent>
@@ -418,6 +442,7 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) => {
                     onTagDelete={handleTaskTagDelete}
                     onMedScheduleMarkTaken={handleMedTaskScheduleMarkTaken}
                     onMedScheduleDelete={handleMedTaskScheduleTakenDelete}
+                    onMedScheduleUndoTaken={handleMedTaskScheduleUndoTaken}
                   />
                 ))}
             </div>

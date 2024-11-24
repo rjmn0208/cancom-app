@@ -186,17 +186,17 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({vitalReading}) => {
           {/* Vital Readings Table */}
           <div className="w-full overflow-y-auto rounded-lg border max-h-[400px]">
             <table className="w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+              <thead >
                 <tr>
-                  <th className="w-[20%] px-4 py-3 text-left text-sm font-medium text-gray-700">Date</th>
-                  <th className="w-[16%] px-4 py-3 text-left text-sm font-medium text-gray-700">Heart Rate (bpm)</th>
-                  <th className="w-[16%] px-4 py-3 text-left text-sm font-medium text-gray-700">Systolic BP (mmHg)</th>
-                  <th className="w-[16%] px-4 py-3 text-left text-sm font-medium text-gray-700">Diastolic BP (mmHg)</th>
-                  <th className="w-[16%] px-4 py-3 text-left text-sm font-medium text-gray-700">SPO2 (%)</th>
-                  <th className="w-[16%] px-4 py-3 text-left text-sm font-medium text-gray-700">Temperature (°C)</th>
+                  <th className="w-[20%] px-4 py-3 text-left text-sm font-medium">Date</th>
+                  <th className="w-[16%] px-4 py-3 text-left text-sm font-medium">Heart Rate (bpm)</th>
+                  <th className="w-[16%] px-4 py-3 text-left text-sm font-medium">Systolic BP (mmHg)</th>
+                  <th className="w-[16%] px-4 py-3 text-left text-sm font-medium">Diastolic BP (mmHg)</th>
+                  <th className="w-[16%] px-4 py-3 text-left text-sm font-medium">SPO2 (%)</th>
+                  <th className="w-[16%] px-4 py-3 text-left text-sm font-medium">Temperature (°C)</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-200">
                 {fields.map((item, index) => (
                   <tr key={item.id}>
                     <td className="px-4 py-3">

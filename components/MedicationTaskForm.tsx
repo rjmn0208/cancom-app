@@ -1,4 +1,13 @@
-import { MedicationTask, Task, TaskType } from "@/lib/types";
+'use client'
+
+
+import {
+  MedicationTask,
+  MedicationTaskSchedule,
+  Task,
+  TaskType,
+  Time,
+} from "@/lib/types";
 import { createClient } from "@/utils/supabase/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm } from "react-hook-form";
@@ -27,11 +36,20 @@ import {
 } from "./ui/select";
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
+import { formatTime } from "@/utils/format-time";
 
 const timeSchema = z.object({
-  hour: z.number().min(0).max(12), // Assuming a 12-hour format
-  minute: z.number().min(0).max(59),
-  period: z.enum(["AM", "PM"]).optional(),
+  hour: z
+    .number()
+    .int()
+    .min(1, { message: "Hour must be between 1 and 12" })
+    .max(12, { message: "Hour must be between 1 and 12" }),
+  minute: z
+    .number()
+    .int()
+    .min(0, { message: "Minute must be between 0 and 59" })
+    .max(59, { message: "Minute must be between 0 and 59" }),
+  period: z.enum(["AM", "PM"], { required_error: "Period is required" }),
 });
 
 const formSchema = z.object({
@@ -60,12 +78,25 @@ interface MedicationTaskFormProps {
   taskListId?: number;
 }
 
-const validateDates = (medTask: FormSchemaType) => {
+const validateDates = async (medTask: FormSchemaType) => {
   if (medTask.startDate && medTask.endDate)
     return medTask.startDate > medTask.endDate
       ? "Start date must be less than end date"
       : null;
 };
+
+const validateTimes = async (timeValues: Time[]) => {
+  const seen = new Set();
+  for (const time of timeValues) {
+    const timeString = formatTime(time);
+    if (seen.has(timeString)) {
+      return "There are conflicting times. Please ensure all times are unique.";
+    }
+    seen.add(timeString);
+  }
+  return null; // No conflicts found
+};
+
 
 const MedicationTaskForm: React.FC<MedicationTaskFormProps> = ({
   medicationTask,
@@ -88,7 +119,7 @@ const MedicationTaskForm: React.FC<MedicationTaskFormProps> = ({
           //medication task fields
           name: medicationTask.name,
           medicineColor: medicationTask.medicineColor,
-          dosage: medicationTask.dosage,
+          dosage: Number(medicationTask.dosage),
           instructions: medicationTask.instructions,
           startDate: medicationTask.startDate
             ? new Date(medicationTask.startDate)
@@ -137,11 +168,24 @@ const MedicationTaskForm: React.FC<MedicationTaskFormProps> = ({
 
   const onSubmit = async (values: FormSchemaType) => {
     const supabase = createClient();
-    console.log(values);
 
-    const validationError = validateDates(values);
-    if (validationError) {
-      toast.error(validationError);
+    const medTaskTimes =
+    medicationTask?.MedicationTaskSchedule?.map(
+      (sched: MedicationTaskSchedule) => sched.time
+    ) || [];
+    const timeValues = [...values.times, ...medTaskTimes];
+
+
+
+    const validationDatesError = await validateDates(values);
+    if (validationDatesError) {
+      toast.error(validationDatesError);
+      return;
+    }
+
+    const validationTimesError = await validateTimes(timeValues);
+    if (validationTimesError) {
+      toast.error(validationTimesError);
       return;
     }
 
@@ -172,10 +216,27 @@ const MedicationTaskForm: React.FC<MedicationTaskFormProps> = ({
           startDate: values.startDate,
           endDate: values.endDate,
         })
-        .eq("taskId", TaskData.id);
+        .eq("taskId", TaskData.id)
+        .select()
+        .single();
 
-      if (!MedicationError) toast.success("Medication edited successfully");
-    
+      if (MedicationError) throw new Error(MedicationError.message);
+
+      const schedules = values.times.map((time) => {
+        return {
+          medicationTaskId: MedicationData?.id,
+          time: formatTime(time),
+          isTaken: false,
+        };
+      });
+
+      const { error: scheduleError } = await supabase
+        .from("MedicationTaskSchedule")
+        .insert(schedules);
+
+      if (scheduleError) throw new Error(scheduleError.message);
+
+      toast.success("Medication task editted successfully");
     } else {
       const {
         data: { user },
@@ -221,19 +282,9 @@ const MedicationTaskForm: React.FC<MedicationTaskFormProps> = ({
       if (MedicationError) throw new Error(MedicationError.message);
 
       const schedules = values.times.map((time) => {
-        const hour =
-          time.period === "PM" && time.hour !== 12
-            ? time.hour + 12
-            : time.period === "AM" && time.hour === 12
-              ? 0
-              : time.hour;
-        const formattedTime = `${hour.toString().padStart(2, "0")}:${time.minute
-          .toString()
-          .padStart(2, "0")}:00`;
-
         return {
           medicationTaskId: MedicationData?.id,
-          time: formattedTime,
+          time: formatTime(time),
           isTaken: false,
         };
       });
@@ -357,7 +408,11 @@ const MedicationTaskForm: React.FC<MedicationTaskFormProps> = ({
             <FormItem>
               <FormLabel>Medicine Pill/Tablet Color:</FormLabel>
               <FormControl>
-                <Input {...field} type="text" placeholder="Leave blank if medicine is not taken by tablet/pill"/>
+                <Input
+                  {...field}
+                  type="text"
+                  placeholder="Leave blank if medicine is not taken by tablet/pill"
+                />
               </FormControl>
               <FormDescription>
                 If the medicine has multiple colors, enter them separated by a
@@ -512,6 +567,32 @@ const MedicationTaskForm: React.FC<MedicationTaskFormProps> = ({
 
         <div>
           <h3 className="text-lg font-medium">Medication Times</h3>
+          <div className="space-y-4">
+            {medicationTask?.MedicationTaskSchedule &&
+            medicationTask.MedicationTaskSchedule.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {medicationTask.MedicationTaskSchedule.map(
+                  (sched: MedicationTaskSchedule) => (
+                    <div
+                      key={sched.id}
+                      className="flex items-center justify-between p-2 rounded-md bg-secondary text-secondary-foreground"
+                    >
+                      <span className="font-medium">
+                        {format(
+                          new Date(`1970-01-01T${sched.time}`),
+                          "hh:mm a"
+                        )}
+                      </span>
+                    </div>
+                  )
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No medication times scheduled.
+              </p>
+            )}
+          </div>
           {fields.map((field, index) => (
             <div key={field.id} className="flex items-end space-x-2 mt-2">
               <FormField
@@ -582,6 +663,7 @@ const MedicationTaskForm: React.FC<MedicationTaskFormProps> = ({
               </Button>
             </div>
           ))}
+
           <Button
             type="button"
             onClick={() => append({ hour: 12, minute: 0, period: "PM" })}

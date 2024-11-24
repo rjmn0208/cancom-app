@@ -69,7 +69,7 @@ export default function ViewTaskLists() {
                 </div>
               </div>
               <Button asChild className="w-full mt-4">
-                <Link href={`/caretaker/view-tasklist/task-list/${list.id}`}>
+                <Link href={`/doctor/view-tasklist/task-list/${list.id}`}>
                   View Tasks
                 </Link>
               </Button>

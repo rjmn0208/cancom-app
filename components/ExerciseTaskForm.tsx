@@ -74,10 +74,10 @@ const ExerciseTaskForm: React.FC<ExerciseTaskFormProps> = ({
 
           //appointment task fields
           name: exerciseTask.name,
-          sets: exerciseTask.sets,
-          reps: exerciseTask.reps,
-          durationPerSet: exerciseTask.durationPerSet,
-          durationPerRep: exerciseTask.durationPerRep,
+          sets: Number(exerciseTask.sets),
+          reps: Number(exerciseTask.reps),
+          durationPerSet: Number(exerciseTask.durationPerSet),
+          durationPerRep: Number(exerciseTask.durationPerRep),
         }
       : {
           //base task fields
@@ -184,13 +184,13 @@ const ExerciseTaskForm: React.FC<ExerciseTaskFormProps> = ({
       if (!ExerciseTaskError)
         toast.success("Exercise details saved successfully");
     }
-
-    useEffect(() => {
-      if (taskListId || exerciseTask) {
-        fetchTasks();
-      }
-    }, [taskListId, exerciseTask]);
   };
+
+  useEffect(() => {
+    if (taskListId || exerciseTask) {
+      fetchTasks();
+    }
+  }, [taskListId, exerciseTask]);
 
   return (
     <Form {...form}>

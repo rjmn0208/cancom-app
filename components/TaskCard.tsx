@@ -66,6 +66,7 @@ interface TaskCardProps {
   isCompleted?: boolean;
   onMedScheduleMarkTaken: (sched: MedicationTaskSchedule) => void;
   onMedScheduleDelete: (sched: MedicationTaskSchedule) => void;
+  onMedScheduleUndoTaken: (sched: MedicationTaskSchedule) => void;
 }
 
 export default function TaskCard({
@@ -77,7 +78,8 @@ export default function TaskCard({
   isCompleted = false,
   onTagDelete,
   onMedScheduleMarkTaken,
-  onMedScheduleDelete
+  onMedScheduleDelete,
+  onMedScheduleUndoTaken
 }: TaskCardProps) {
   const [subTasks, setSubTasks] = useState<Task[]>([]);
   const [prerequisites, setPrerequisites] = useState<Task[]>([]);
@@ -232,13 +234,20 @@ export default function TaskCard({
             </p>
             <div className="space-y-2">
               <h1 className='text-md font-semibold'>Medication Schedules:</h1>
-              {task.MedicationTask[0].MedicationTaskSchedule.map((sched) => (
+              {task.MedicationTask[0].MedicationTaskSchedule.map((sched: MedicationTaskSchedule) => (
                 <div key={sched.id} className="flex items-center space-x-2">
                   <Checkbox 
-                    id={sched.id.toString()} 
-                    disabled={sched.isTaken} 
+                    id={sched.id.toString()}
                     checked={sched.isTaken}
-                    onCheckedChange={() => onMedScheduleMarkTaken(sched)}
+                    onCheckedChange={(checked) => 
+
+                      {
+                        checked ? 
+                        onMedScheduleMarkTaken(sched)
+                        :
+                        onMedScheduleUndoTaken(sched)
+                      }
+                    }
                     />
                   <Label htmlFor={sched.id.toString()}>
                     {format(new Date(`1970-01-01T${sched.time}`), "hh:mm a")}
