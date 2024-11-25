@@ -77,7 +77,7 @@ const TreatmentTaskForm: React.FC<TreatmenTaskFormProps> = ({
           medicalInstitutionId: treatmentTask.medicalInstitutionId,
           treatmentType: treatmentTask.treatmentType,
           date: treatmentTask.date ? new Date(treatmentTask.date) : null,
-          dosage: treatmentTask.dosage,
+          dosage: Number(treatmentTask.dosage),
         }
       : {
           //base task fields
