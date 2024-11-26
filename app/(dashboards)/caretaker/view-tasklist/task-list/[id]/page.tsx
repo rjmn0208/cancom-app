@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Clock, Pill, Stethoscope, User, BookOpen, Cross } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ListPermission, Task, TaskType } from "@/lib/types";
+import { ListPermission, MedicationTaskSchedule, Task, TaskTag, TaskType } from "@/lib/types";
 import { createClient } from "@/utils/supabase/client";
 import {
   Dialog,
@@ -61,7 +61,7 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) => {
     const { data, error } = await supabase
       .from("Task")
       .select(
-        "*, TaskTag(*), TaskCreator: User(*),ExerciseTask(*), MedicationTask(*), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))",
+        "*, TaskTag(*), TaskCreator: User(*),ExerciseTask(*), MedicationTask(*,MedicationTaskSchedule(*)), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))"
       )
       .eq("taskListId", taskListId)
       .eq("isDone", false)
@@ -75,7 +75,7 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) => {
     const { data, error } = await supabase
       .from("Task")
       .select(
-        "*, TaskTag(*), TaskCreator: User(*), ExerciseTask(*), MedicationTask(*), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))",
+        "*, TaskTag(*), TaskCreator: User(*), ExerciseTask(*), MedicationTask(*,MedicationTaskSchedule(*)), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))"
       )
       .eq("taskListId", taskListId)
       .eq("isDone", true)
@@ -93,7 +93,7 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) => {
     const { data, error } = await supabase
       .from("Task")
       .select(
-        "*, TaskTag(*), TaskCreator: User(*), ExerciseTask (*), MedicationTask(*), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))",
+        "*, TaskTag(*), TaskCreator: User(*), ExerciseTask (*), MedicationTask(*,MedicationTaskSchedule(*)), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))"
       )
       .eq("taskListId", taskListId)
       .eq("isArchived", true)
@@ -101,6 +101,21 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) => {
       .eq("taskCreator", user?.id);
 
     if (!error && data) setArchivedTasks(data);
+  };
+
+  const handleTaskTagDelete = async (tag: TaskTag) => {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("TaskTag")
+      .delete()
+      .eq("id", tag.id);
+
+    if (!error) {
+      toast.success("Tag deleted successfully");
+      fetchTasks();
+      fetchCompletedTasks();
+      fetchArchivedTasks();
+    }
   };
 
   const handleDelete = async (task: Task) => {
@@ -155,6 +170,64 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) => {
       fetchArchivedTasks();
     }
   };
+
+  const handleMedTaskScheduleMarkTaken= async (sched: MedicationTaskSchedule) => {
+    const supabase = createClient()
+
+    const {data, error} = await supabase
+    .from('MedicationTaskSchedule')
+    .update({
+      isTaken: true
+    })
+    .eq('id', sched.id)
+    .select()
+    .single()
+
+    if(!error) {
+      toast.success(`Medicine Taken at ${data.time}`)
+      fetchTasks();
+      fetchArchivedTasks();
+      fetchCompletedTasks();
+    }
+  }
+
+  const handleMedTaskScheduleTakenDelete = async (sched: MedicationTaskSchedule) => {
+    const supabase = createClient()
+
+    const {data, error} = await supabase
+    .from('MedicationTaskSchedule')
+    .delete()
+    .eq('id', sched.id)
+    .single()
+    
+    if(!error) {
+      toast.success('Schedule delete successful')
+      fetchTasks();
+      fetchArchivedTasks();
+      fetchCompletedTasks();
+    }
+  }
+
+  const handleMedTaskScheduleUndoTaken = async (sched: MedicationTaskSchedule) => {
+    const supabase = createClient()
+
+    const {data, error} = await supabase
+    .from('MedicationTaskSchedule')
+    .update({
+      isTaken: false
+    })
+    .eq('id', sched.id)
+    .select()
+    .single()
+
+
+    if(!error) {
+      toast.success(`Medicine taken undoed`)
+      fetchTasks();
+      fetchArchivedTasks();
+      fetchCompletedTasks();
+    }
+  }
 
   const isListManager = () => {
     return permission === ListPermission.MANAGER;
@@ -252,7 +325,11 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) => {
                   onComplete={handleComplete}
                   onUndoComplete={handleUndoComplete}
                   onOpenChange={handleOpenChange}
+                  onTagDelete={handleTaskTagDelete}
                   isCompleted={true}
+                  onMedScheduleMarkTaken={handleMedTaskScheduleMarkTaken}
+                  onMedScheduleDelete={handleMedTaskScheduleTakenDelete}
+                  onMedScheduleUndoTaken={handleMedTaskScheduleUndoTaken}
                 />
               ))}
             </SheetContent>
@@ -273,7 +350,11 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) => {
                   onDelete={handleDelete}
                   onComplete={handleComplete}
                   onUndoComplete={handleUndoComplete}
+                  onTagDelete={handleTaskTagDelete}
                   onOpenChange={handleOpenChange}
+                  onMedScheduleMarkTaken={handleMedTaskScheduleMarkTaken}
+                  onMedScheduleDelete={handleMedTaskScheduleTakenDelete}
+                  onMedScheduleUndoTaken={handleMedTaskScheduleUndoTaken}
                 />
               ))}
             </SheetContent>
@@ -323,7 +404,7 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) => {
               <h2 className="font-semibold text-lg">{type}</h2>
             </div>
             <div className="space-y-4">
-              {tasks
+            {tasks
                 .filter((task) => task.type === type)
                 .map((task) => (
                   <TaskCard
@@ -332,6 +413,10 @@ const PatientTaskListPage = ({ params }: { params: { id: string } }) => {
                     onDelete={handleDelete}
                     onComplete={handleComplete}
                     onOpenChange={handleOpenChange}
+                    onTagDelete={handleTaskTagDelete}
+                    onMedScheduleMarkTaken={handleMedTaskScheduleMarkTaken}
+                    onMedScheduleDelete={handleMedTaskScheduleTakenDelete}
+                    onMedScheduleUndoTaken={handleMedTaskScheduleUndoTaken}
                   />
                 ))}
             </div>
