@@ -8,6 +8,7 @@ import {
   MedicationTask,
   TaskTag,
   MedicationTaskSchedule,
+  ListPermission,
 } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -67,6 +68,7 @@ interface TaskCardProps {
   onMedScheduleMarkTaken: (sched: MedicationTaskSchedule) => void;
   onMedScheduleDelete: (sched: MedicationTaskSchedule) => void;
   onMedScheduleUndoTaken: (sched: MedicationTaskSchedule) => void;
+  permission?: ListPermission
 }
 
 export default function TaskCard({
@@ -377,7 +379,6 @@ export default function TaskCard({
               </span>
             </div>
           )}
-          {renderTaskTypeDetails()}
         </div>
       </CardContent>
       <CardFooter className="flex justify-end space-x-2">
@@ -408,7 +409,7 @@ export default function TaskCard({
             </Button>
           </>
         ) : (
-          <div className="flex-1 space-x-2">
+          <div className="flex flex-wrap gap-2">
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="ghost" size="icon">
@@ -449,10 +450,10 @@ export default function TaskCard({
                       </ul>
                     </div>
                   )}
+                  {renderTaskTypeDetails()}
                 </div>
               </DialogContent>
             </Dialog>
-
             <Dialog onOpenChange={onOpenChange}>
               <DialogTrigger asChild>
                 <Button variant="ghost" size="icon">
@@ -508,18 +509,18 @@ export default function TaskCard({
                 )}
               </DialogContent>
             </Dialog>
-
-            <Button variant="outline" onClick={() => handleAction("complete")}>
-              <CheckCircleIcon className="w-4 h-4" />
-            </Button>
-
+            {task.type !== TaskType.MEDICATION && (
+              <Button variant="outline" onClick={() => handleAction("complete")}>
+                <CheckCircleIcon className="w-4 h-4" />
+              </Button>
+            )}
             <Button
               variant="destructive"
               onClick={() => handleAction("delete")}
             >
               <Trash2Icon className="w-4 h-4" />
             </Button>
-
+            
             <div className="flex flex-wrap gap-2">
               {task.TaskTag.map((tag: TaskTag) => (
                 <div
