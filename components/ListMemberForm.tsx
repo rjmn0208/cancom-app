@@ -21,17 +21,13 @@ import {
   SelectValue,
 } from "./ui/select";
 import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { format } from "date-fns";
-import { ListMembership, User } from "@/lib/types";
+import { ListMembership, User, UserType } from "@/lib/types";
 import { toast } from "sonner";
 
 const formSchema = z.object({
   userId: z.string(),
   taskListId: z.number().nullable(),
   permission: z.enum(["MANAGER", "MEMBER"]).nullable(),
-  startDate: z.date().nullable(),
-  endDate: z.date().nullable(),
 });
 
 type FormSchemaType = z.infer<typeof formSchema>;
@@ -54,17 +50,11 @@ const ListMemberForm: React.FC<ListMembershipFormProps> = ({
           userId: listMember.userId,
           taskListId: listMember.taskListId,
           permission: listMember.permission,
-          startDate: listMember.startDate
-            ? new Date(listMember.startDate)
-            : null,
-          endDate: listMember.endDate ? new Date(listMember.endDate) : null,
         }
       : {
           userId: "",
           taskListId: taskListId,
           permission: null,
-          startDate: null,
-          endDate: null,
         },
   });
 
@@ -77,7 +67,9 @@ const ListMemberForm: React.FC<ListMembershipFormProps> = ({
     const { data, error } = await supabase
       .from("User")
       .select("*")
-      .neq("id", user?.id);
+      .neq("id", user?.id)
+      .neq('userType', UserType.ADMIN)
+      .neq('userType', UserType.MEDICAL_STAFF)
 
     if (!error) {
       setUsers(data);
@@ -96,6 +88,7 @@ const ListMemberForm: React.FC<ListMembershipFormProps> = ({
     } else {
       const { data, error } = await supabase.from("ListMembership").insert({
         ...values,
+        startDate: new Date()
       });
 
       console.log(error);
@@ -123,16 +116,12 @@ const ListMemberForm: React.FC<ListMembershipFormProps> = ({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {users?.map((user: User) => (
+                {users?.map((user: User) => (
                     <SelectItem key={user.id} value={user.id}>
-                      <p>
-                        <b>User ID:</b> {user.id}
-                      </p>
-                      <p>
-                        <b>User Name:</b> {user.firstName} {user.middleName}{" "}
-                        {user.lastName}
-                      </p>
-                      <b>{user.userType}</b>
+                      <div className="flex flex-col">
+                        <span className="font-semibold">{user.firstName} {user.middleName} {user.lastName}</span>
+                        <span className="text-xs text-muted-foreground">{user.userType}</span>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -168,54 +157,7 @@ const ListMemberForm: React.FC<ListMembershipFormProps> = ({
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="startDate"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>Start Date:</FormLabel>
-              <FormControl>
-                <Input
-                  type="datetime-local"
-                  {...field}
-                  value={
-                    field.value
-                      ? format(new Date(field.value), "yyyy-MM-dd'T'HH:mm")
-                      : ""
-                  }
-                  onChange={(e) => {
-                    field.onChange(new Date(e.target.value));
-                  }}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="endDate"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>End Date:</FormLabel>
-              <FormControl>
-                <Input
-                  type="datetime-local"
-                  {...field}
-                  value={
-                    field.value
-                      ? format(new Date(field.value), "yyyy-MM-dd'T'HH:mm")
-                      : ""
-                  }
-                  onChange={(e) => {
-                    field.onChange(new Date(e.target.value));
-                  }}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        
         <Button type="submit" className="w-full mt-4">
           Submit
         </Button>

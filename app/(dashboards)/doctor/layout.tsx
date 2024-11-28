@@ -33,6 +33,12 @@ export default function DashboardLayout({
           >
             Log vitals for patient
           </Link>
+          <Link
+            href="/doctor/appointments"
+            className="block text-muted-foreground hover:text-foreground transition-colors"
+          >
+            View Appointments
+          </Link>
         </nav>
         <UserDetails />
       </aside>

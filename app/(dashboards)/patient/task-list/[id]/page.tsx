@@ -1,13 +1,15 @@
-'use client'
 
 import TaskListPage from '@/components/TaskListPage'
+import { ListPermission } from '@/lib/types'
 import React from 'react'
 
-const PatientTaskListPage = ({ params }: { params: { id: string } }) => {
-
+const PatientTaskListPage = async ({ params }: { params: { id: string } }) => {
   return (
     <div>
-      <TaskListPage taskListId={Number(params.id)}/>
+      <TaskListPage 
+        taskListId={Number(params.id)}
+        listPermission={ListPermission.MANAGER}
+        />
     </div>
   )
 }

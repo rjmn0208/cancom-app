@@ -1,9 +1,24 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Clock, Pill, Stethoscope, User, BookOpen, Cross, Search } from "lucide-react";
+import {
+  Clock,
+  Pill,
+  Stethoscope,
+  User,
+  BookOpen,
+  Cross,
+  Search,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { MedicationTaskSchedule, Task, TaskList, TaskTag, TaskType } from "@/lib/types";
+import {
+  ListPermission,
+  MedicationTaskSchedule,
+  Task,
+  TaskList,
+  TaskTag,
+  TaskType,
+} from "@/lib/types";
 import { createClient } from "@/utils/supabase/client";
 import {
   Dialog,
@@ -34,10 +49,14 @@ import ExerciseTaskForm from "@/components/ExerciseTaskForm";
 import { Input } from "@/components/ui/input";
 
 interface TaskListPageProps {
-  taskListId: number,
+  taskListId: number;
+  listPermission: ListPermission;
 }
 
-const TaskListPage: React.FC<TaskListPageProps> = ({taskListId}) => {
+const TaskListPage: React.FC<TaskListPageProps> = ({
+  taskListId,
+  listPermission,
+}) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [completedTasks, setCompletedTasks] = useState<Task[]>([]);
   const [archivedTasks, setArchivedTasks] = useState<Task[]>([]);
@@ -52,9 +71,9 @@ const TaskListPage: React.FC<TaskListPageProps> = ({taskListId}) => {
         "*, TaskTag(*), TaskCreator: User(*),ExerciseTask(*), MedicationTask(*,MedicationTaskSchedule(*)), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))"
       )
       .eq("taskListId", taskListId)
-      .eq("isDone", false);
+      .eq("isDone", false)
+      .eq('isArchived', false)
 
-    console.log("Tasks:", data, "Error:", error);
     if (!error && data) setTasks(data);
   };
 
@@ -73,6 +92,10 @@ const TaskListPage: React.FC<TaskListPageProps> = ({taskListId}) => {
 
   const fetchArchivedTasks = async () => {
     const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
     const { data, error } = await supabase
       .from("Task")
       .select(
@@ -80,7 +103,8 @@ const TaskListPage: React.FC<TaskListPageProps> = ({taskListId}) => {
       )
       .eq("taskListId", taskListId)
       .eq("isArchived", true)
-      .eq("isDone", false);
+      .eq("isDone", false)
+      .eq("taskCreator", user?.id);
 
     if (!error && data) setArchivedTasks(data);
   };
@@ -207,71 +231,75 @@ const TaskListPage: React.FC<TaskListPageProps> = ({taskListId}) => {
     }
   };
 
-  const handleMedTaskScheduleMarkTaken= async (sched: MedicationTaskSchedule) => {
-    const supabase = createClient()
+  const handleMedTaskScheduleMarkTaken = async (
+    sched: MedicationTaskSchedule
+  ) => {
+    const supabase = createClient();
 
-    const {data, error} = await supabase
-    .from('MedicationTaskSchedule')
-    .update({
-      isTaken: true
-    })
-    .eq('id', sched.id)
-    .select()
-    .single()
+    const { data, error } = await supabase
+      .from("MedicationTaskSchedule")
+      .update({
+        isTaken: true,
+      })
+      .eq("id", sched.id)
+      .select()
+      .single();
 
-    if(!error) {
-      toast.success(`Medicine Taken at ${data.time}`)
+    if (!error) {
+      toast.success(`Medicine Taken at ${data.time}`);
       fetchTasks();
       fetchArchivedTasks();
       fetchCompletedTasks();
     }
-  }
+  };
 
-  const handleMedTaskScheduleTakenDelete = async (sched: MedicationTaskSchedule) => {
-    const supabase = createClient()
+  const handleMedTaskScheduleTakenDelete = async (
+    sched: MedicationTaskSchedule
+  ) => {
+    const supabase = createClient();
 
-    const {data, error} = await supabase
-    .from('MedicationTaskSchedule')
-    .delete()
-    .eq('id', sched.id)
-    .single()
-    
-    if(!error) {
-      toast.success('Schedule delete successful')
+    const { data, error } = await supabase
+      .from("MedicationTaskSchedule")
+      .delete()
+      .eq("id", sched.id)
+      .single();
+
+    if (!error) {
+      toast.success("Schedule delete successful");
       fetchTasks();
       fetchArchivedTasks();
       fetchCompletedTasks();
     }
-  }
+  };
 
+  const handleMedTaskScheduleUndoTaken = async (
+    sched: MedicationTaskSchedule
+  ) => {
+    const supabase = createClient();
 
-  const handleMedTaskScheduleUndoTaken = async (sched: MedicationTaskSchedule) => {
-    const supabase = createClient()
+    const { data, error } = await supabase
+      .from("MedicationTaskSchedule")
+      .update({
+        isTaken: false,
+      })
+      .eq("id", sched.id)
+      .select()
+      .single();
 
-    const {data, error} = await supabase
-    .from('MedicationTaskSchedule')
-    .update({
-      isTaken: false
-    })
-    .eq('id', sched.id)
-    .select()
-    .single()
-
-
-    if(!error) {
-      toast.success(`Medicine taken undoed`)
+    if (!error) {
+      toast.success(`Medicine taken undoed`);
       fetchTasks();
       fetchArchivedTasks();
       fetchCompletedTasks();
     }
-  }
+  };
 
   const searchTask = (task: Task, query: string) => {
     const searchFields = [
       task.title,
       task.priority,
       task.description,
-      ...(task.TaskTag?.map((tag: any)=> tag.value) || []),
+      ...(task.TaskTag?.map((tag: any) => tag.value) || []),
       task.MedicationTask[0]?.name,
       task.AppointmentTask[0]?.Doctor?.User?.firstName,
       task.AppointmentTask[0]?.Doctor?.User?.middleName,
@@ -280,13 +308,12 @@ const TaskListPage: React.FC<TaskListPageProps> = ({taskListId}) => {
       task.ExerciseTask[0]?.name,
     ];
 
-    return searchFields.some(field => 
-      field && field.toLowerCase().includes(query.toLowerCase())
+    return searchFields.some(
+      (field) => field && field.toLowerCase().includes(query.toLowerCase())
     );
   };
 
-  
-  const filteredTasks = tasks.filter(task => searchTask(task, searchQuery));
+  const filteredTasks = tasks.filter((task) => searchTask(task, searchQuery));
 
   useEffect(() => {
     fetchTasks();
@@ -315,52 +342,54 @@ const TaskListPage: React.FC<TaskListPageProps> = ({taskListId}) => {
         <div className="flex items-center space-x-4">
           <h1 className="text-2xl font-bold">Dashboard</h1>
 
-          <Dialog onOpenChange={handleOpenChange}>
-            <DialogTrigger asChild>
-              <Button>Add Task</Button>
-            </DialogTrigger>
-            <DialogContent className="h-4/5 overflow-y-auto w-11/12">
-              <DialogHeader>
-                <DialogTitle>Add New Task</DialogTitle>
-                <DialogDescription>
-                  Choose a task type and fill in the details.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-6 py-4">
-                <div className="space-y-4">
-                  <Label>Choose Task Type</Label>
-                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                    {Object.values(TaskType).map((type) => (
-                      <Button
-                        key={type}
-                        variant={addTaskType === type ? "default" : "outline"}
-                        onClick={() => setAddTaskType(type)}
-                        className="w-full"
-                      >
-                        {type.charAt(0) + type.slice(1).toLowerCase()}
-                      </Button>
-                    ))}
+          {listPermission === ListPermission.MANAGER && (
+            <Dialog onOpenChange={handleOpenChange}>
+              <DialogTrigger asChild>
+                <Button>Add Task</Button>
+              </DialogTrigger>
+              <DialogContent className="h-4/5 overflow-y-auto w-11/12">
+                <DialogHeader>
+                  <DialogTitle>Add New Task</DialogTitle>
+                  <DialogDescription>
+                    Choose a task type and fill in the details.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-6 py-4">
+                  <div className="space-y-4">
+                    <Label>Choose Task Type</Label>
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                      {Object.values(TaskType).map((type) => (
+                        <Button
+                          key={type}
+                          variant={addTaskType === type ? "default" : "outline"}
+                          onClick={() => setAddTaskType(type)}
+                          className="w-full"
+                        >
+                          {type.charAt(0) + type.slice(1).toLowerCase()}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
+                  <Separator />
+                  {addTaskType === TaskType.GENERAL && (
+                    <GeneralTaskForm taskListId={taskListId} />
+                  )}
+                  {addTaskType === TaskType.APPOINTMENT && (
+                    <AppointmentTaskForm taskListId={taskListId} />
+                  )}
+                  {addTaskType === TaskType.MEDICATION && (
+                    <MedicationTaskForm taskListId={taskListId} />
+                  )}
+                  {addTaskType === TaskType.TREATMENT && (
+                    <TreatmentTaskForm taskListId={taskListId} />
+                  )}
+                  {addTaskType === TaskType.EXERCISE && (
+                    <ExerciseTaskForm taskListId={taskListId} />
+                  )}
                 </div>
-                <Separator />
-                {addTaskType === TaskType.GENERAL && (
-                  <GeneralTaskForm taskListId={taskListId} />
-                )}
-                {addTaskType === TaskType.APPOINTMENT && (
-                  <AppointmentTaskForm taskListId={taskListId} />
-                )}
-                {addTaskType === TaskType.MEDICATION && (
-                  <MedicationTaskForm taskListId={taskListId} />
-                )}
-                {addTaskType === TaskType.TREATMENT && (
-                  <TreatmentTaskForm taskListId={taskListId} />
-                )}
-                {addTaskType === TaskType.EXERCISE && (
-                  <ExerciseTaskForm taskListId={taskListId} />
-                )}
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogContent>
+            </Dialog>
+          )}
 
           <Sheet onOpenChange={handleOpenChange}>
             <SheetTrigger asChild>
@@ -429,22 +458,25 @@ const TaskListPage: React.FC<TaskListPageProps> = ({taskListId}) => {
             </DialogContent>
           </Dialog>
         </div>
-        <Dialog onOpenChange={handleOpenChange}>
-          <DialogTrigger asChild>
-            <Button variant="outline">
-              <User className="mr-2 h-4 w-4" />
-              Invite to Task List
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Manage User Permissions</DialogTitle>
-            </DialogHeader>
-            <div className="p-4 max-h-[90vh] overflow-y-auto">
-              <ListMemberForm taskListId={taskListId} />
-            </div>
-          </DialogContent>
-        </Dialog>
+
+        {listPermission === ListPermission.MANAGER && (
+          <Dialog onOpenChange={handleOpenChange}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <User className="mr-2 h-4 w-4" />
+                Invite to Task List
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Manage User Permissions</DialogTitle>
+              </DialogHeader>
+              <div className="p-4 max-h-[90vh] overflow-y-auto">
+                <ListMemberForm taskListId={taskListId} />
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
       <div className="flex items-center gap-4 m-5">
         <Search className="h-5 w-5 text-gray-400" />
@@ -454,11 +486,10 @@ const TaskListPage: React.FC<TaskListPageProps> = ({taskListId}) => {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-4/5"
-          />
+        />
       </div>
-      
+
       <div className="flex space-x-6 overflow-x-auto">
-        
         {Object.values(TaskType).map((type) => (
           <div key={type} className="w-[600px]">
             <div className="flex items-center space-x-2">

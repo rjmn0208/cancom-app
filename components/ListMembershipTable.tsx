@@ -86,7 +86,7 @@ const ListMembershipTable: React.FC<ListMembershipTableProps> = ({
       .from("ListMembership")
       .delete()
       .eq("id", listMember.id);
-
+    
     fetchTaskListMembers();
   };
 
@@ -112,7 +112,6 @@ const ListMembershipTable: React.FC<ListMembershipTableProps> = ({
           <TableHead>Member</TableHead>
           <TableHead>Permission</TableHead>
           <TableHead>Start Date</TableHead>
-          <TableHead>End Date</TableHead>
           <TableHead>Actions</TableHead>
         </TableRow>
       </TableHeader>
@@ -140,22 +139,12 @@ const ListMembershipTable: React.FC<ListMembershipTableProps> = ({
                 hour12: true,
               })}
             </TableCell>
-            <TableCell>
-              {new Date(listMember.endDate).toLocaleString(undefined, {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: true,
-              })}
-            </TableCell>
-            <TableCell>
+            <TableCell >
               {isOwner || isListManager() ? (
-                <div>
+                <div className="flex flex-col gap-2">
                   <Dialog onOpenChange={handleOpenChange}>
                     <DialogTrigger asChild>
-                      <Button variant={"outline"}>Edit</Button>
+                      <Button variant="outline">Edit</Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-[425px]">
                       <DialogHeader>
