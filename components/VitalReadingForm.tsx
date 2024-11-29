@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { createClient } from "@/utils/supabase/client";
@@ -17,56 +17,43 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import { Patient, User, UserType, VitalReading } from "@/lib/types";
+import { Patient, User, UserType } from "@/lib/types";
 import { jwtDecode } from "jwt-decode";
 import { readUserSession } from "@/utils/read-user-session";
-import { error } from "console";
-
 
 const formSchema = z.object({
   recordedBy: z.string(),
-  patientId: z.number().nullable(),
+  patientId: z
+    .number({
+      required_error: "Patient is required",
+    })
+    .nullable()
+    .refine((value) => value !== null, {
+      message: "Patient is required",
+    }),
   vitalsData: z.array(
     z.object({
-      date: z.string().nonempty("Date is required"), // Ensure a value is provided
-      heartRate: z.coerce.number()
-        .min(40, "Heart rate must be at least 40 bpm")
-        .max(200, "Heart rate cannot exceed 200 bpm")
-        .nullable(),
-      systolicBloodPressure: z.coerce.number()
-        .min(90, "Systolic BP must be at least 90 mmHg")
-        .max(200, "Systolic BP cannot exceed 200 mmHg")
-        .nullable(),
-      diastolicBloodPressure: z.coerce.number()
-        .min(60, "Diastolic BP must be at least 60 mmHg")
-        .max(120, "Diastolic BP cannot exceed 120 mmHg")
-        .nullable(),
-      spO2: z.coerce.number()
-        .min(0, "SPO2 must be at least 0%")
-        .max(100, "SPO2 cannot exceed 100%")
-        .nullable(),
-      temperature: z.coerce.number()
-        .min(30.0, "Temperature must be at least 30.0°C")
-        .max(45.0, "Temperature cannot exceed 45.0°C")
-        .nullable(),
+      date: z.string().nonempty("Date is required"),
+      heartRate: z.string().nonempty("Heart rate is required").transform((val) => parseFloat(val)),
+      systolicBloodPressure: z.string().nonempty("Systolic BP is required").transform((val) => parseFloat(val)),
+      diastolicBloodPressure: z.string().nonempty("Diastolic BP is required").transform((val) => parseFloat(val)),
+      spO2: z.string().nonempty("SPO2 is required").transform((val) => parseFloat(val)),
+      temperature: z.string().nonempty("Temperature is required").transform((val) => parseFloat(val)),
+      abnormalityConfirmed: z.boolean().optional(),
     })
   ),
 });
 
-
-
 type FormSchemaType = z.infer<typeof formSchema>;
 
-
 interface VitalReadingFormProps {
-  vitalReading?: Partial<VitalReading>
+  onClose: () => void; // Prop to handle closing the modal
 }
 
-const VitalReadingForm: React.FC<VitalReadingFormProps> = ({vitalReading}) => {
+const VitalReadingForm: React.FC<VitalReadingFormProps> = ({ onClose }) => {
   const [users, setUsers] = useState<User[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [userType, setUserType] = useState<UserType>();
-
 
   const fetchUserType = async () => {
     const {
@@ -79,20 +66,18 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({vitalReading}) => {
     }
   };
 
-
   useEffect(() => {
     const fetchData = async () => {
       const supabase = createClient();
 
       const { data: users, error: UserError } = await supabase.from("User").select("*");
-      if(!UserError) setUsers(users);
+      if (!UserError && users) setUsers(users);
 
-      const { data: patients, error: PatientError} = await supabase.from("Patient").select("*, User(*)");
-      if(!PatientError) setPatients(patients);
+      const { data: patients, error: PatientError } = await supabase.from("Patient").select("*, User(*)");
+      if (!PatientError && patients) setPatients(patients);
     };
     fetchData();
     fetchUserType();
-    
   }, []);
 
   const form = useForm<FormSchemaType>({
@@ -100,32 +85,58 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({vitalReading}) => {
     defaultValues: {
       recordedBy: "",
       patientId: null,
-      vitalsData: [{ date: "", heartRate: null, systolicBloodPressure: null, diastolicBloodPressure: null, spO2: null, temperature: null }],
+      vitalsData: [
+        {
+          date: "",
+          heartRate: "",
+          systolicBloodPressure: "",
+          diastolicBloodPressure: "",
+          spO2: "",
+          temperature: "",
+          abnormalityConfirmed: false,
+        },
+      ],
     },
   });
 
-  const { fields, append } = useFieldArray({
-    control: form.control,
-    name: "vitalsData",
-  });
-
   const onSubmit = async (values: FormSchemaType) => {
-    console.log('FormValues', values);
+    const abnormalReadings = values.vitalsData.filter((reading) => {
+      const isAbnormal =
+        reading.heartRate < 40 ||
+        reading.heartRate > 200 ||
+        reading.systolicBloodPressure < 90 ||
+        reading.systolicBloodPressure > 200 ||
+        reading.diastolicBloodPressure < 60 ||
+        reading.diastolicBloodPressure > 120 ||
+        reading.spO2 < 90 ||
+        reading.spO2 > 100 ||
+        reading.temperature < 30 ||
+        reading.temperature > 45;
+
+      return isAbnormal && !reading.abnormalityConfirmed;
+    });
+
+    if (abnormalReadings.length > 0) {
+      toast.error("Abnormal readings detected. Please confirm abnormalities.");
+      return;
+    }
+
+    console.log("FormValues", values);
     toast.success("Vital Reading recorded successfully!");
+    onClose(); // Call the parent-provided close function
   };
 
   return (
-    <div className="w-full max-w-[1200px] mx-auto px-4">
+    <div className="w-full max-w-[1200px] mx-auto px-6 py-4">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Recorded By */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-6">
             <FormField
               control={form.control}
               name="recordedBy"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-lg">Recorded By</FormLabel>
+                  <FormLabel className="text-lg font-semibold">Recorded By</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value} disabled={userType !== UserType.ADMIN}>
                     <FormControl>
                       <SelectTrigger>
@@ -133,7 +144,7 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({vitalReading}) => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {users.map((user: any) => (
+                      {users.map((user: User) => (
                         <SelectItem key={user.id} value={user.id}>
                           {user.firstName} {user.lastName}
                         </SelectItem>
@@ -145,13 +156,12 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({vitalReading}) => {
               )}
             />
 
-            {/* Patient */}
             <FormField
               control={form.control}
               name="patientId"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <FormItem>
-                  <FormLabel className="text-lg">Patient</FormLabel>
+                  <FormLabel className="text-lg font-semibold">Patient</FormLabel>
                   <Select onValueChange={(value) => field.onChange(Number(value))} defaultValue={field.value?.toString()} disabled={userType === UserType.PATIENT}>
                     <FormControl>
                       <SelectTrigger>
@@ -161,95 +171,123 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({vitalReading}) => {
                     <SelectContent>
                       {patients.map((patient: Patient) => (
                         <SelectItem key={patient.id} value={patient.id.toString()}>
-                          {patient.User.firstName} {patient.User.middleName} {patient.User?.lastName}
+                          {patient.User.firstName} {patient.User.middleName || ""} {patient.User?.lastName}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  <FormMessage />
+                  <FormMessage>{fieldState.error?.message}</FormMessage>
                 </FormItem>
               )}
             />
           </div>
 
-          {/* Add More Rows Button */}
-          <Button
-            type="button"
-            onClick={() =>
-              append({ date: "", heartRate: null, systolicBloodPressure: null, diastolicBloodPressure: null, spO2: null, temperature: null })
-            }
-            className="mb-6 mt-6"
-          >
-            Add More Rows
-          </Button>
-
-          {/* Vital Readings Table */}
-          <div className="w-full overflow-y-auto rounded-lg border max-h-[400px]">
-            <table className="w-full divide-y divide-gray-200">
-              <thead >
-                <tr>
-                  <th className="w-[20%] px-4 py-3 text-left text-sm font-medium">Date</th>
-                  <th className="w-[16%] px-4 py-3 text-left text-sm font-medium">Heart Rate (bpm)</th>
-                  <th className="w-[16%] px-4 py-3 text-left text-sm font-medium">Systolic BP (mmHg)</th>
-                  <th className="w-[16%] px-4 py-3 text-left text-sm font-medium">Diastolic BP (mmHg)</th>
-                  <th className="w-[16%] px-4 py-3 text-left text-sm font-medium">SPO2 (%)</th>
-                  <th className="w-[16%] px-4 py-3 text-left text-sm font-medium">Temperature (°C)</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {fields.map((item, index) => (
-                  <tr key={item.id}>
+          <div className="mb-8">
+            <div className="w-full overflow-y-auto rounded-lg border border-gray-300 max-h-[400px]">
+              <table className="w-full text-sm text-left text-gray-700 divide-y divide-gray-200">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="px-4 py-3">Date</th>
+                    <th className="px-4 py-3">Heart Rate</th>
+                    <th className="px-4 py-3">Systolic BP</th>
+                    <th className="px-4 py-3">Diastolic BP</th>
+                    <th className="px-4 py-3">SPO2</th>
+                    <th className="px-4 py-3">Temperature</th>
+                    <th className="px-4 py-3">Confirm Abnormality</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="bg-white hover:bg-gray-50">
                     <td className="px-4 py-3">
-                      <Input 
-                        {...form.register(`vitalsData.${index}.date`)} 
-                        type="datetime-local" 
-                        className="w-full" 
+                      <FormField
+                        control={form.control}
+                        name={`vitalsData.0.date`}
+                        render={({ field, fieldState }) => (
+                          <FormItem>
+                            <Input {...field} type="datetime-local" className="w-full border-gray-300 rounded" />
+                            <FormMessage>{fieldState.error?.message}</FormMessage>
+                          </FormItem>
+                        )}
                       />
                     </td>
                     <td className="px-4 py-3">
-                      <Input 
-                        {...form.register(`vitalsData.${index}.heartRate`)} 
-                        type="number"
-                        className="w-full" 
+                      <FormField
+                        control={form.control}
+                        name={`vitalsData.0.heartRate`}
+                        render={({ field, fieldState }) => (
+                          <FormItem>
+                            <Input {...field} type="number" className="w-full border-gray-300 rounded" />
+                            <FormMessage>{fieldState.error?.message}</FormMessage>
+                          </FormItem>
+                        )}
                       />
                     </td>
                     <td className="px-4 py-3">
-                      <Input 
-                        {...form.register(`vitalsData.${index}.systolicBloodPressure`)} 
-                        type="number"
-                        className="w-full" 
+                      <FormField
+                        control={form.control}
+                        name={`vitalsData.0.systolicBloodPressure`}
+                        render={({ field, fieldState }) => (
+                          <FormItem>
+                            <Input {...field} type="number" className="w-full border-gray-300 rounded" />
+                            <FormMessage>{fieldState.error?.message}</FormMessage>
+                          </FormItem>
+                        )}
                       />
                     </td>
                     <td className="px-4 py-3">
-                      <Input 
-                        {...form.register(`vitalsData.${index}.diastolicBloodPressure`)} 
-                        type="number"
-                        className="w-full" 
+                      <FormField
+                        control={form.control}
+                        name={`vitalsData.0.diastolicBloodPressure`}
+                        render={({ field, fieldState }) => (
+                          <FormItem>
+                            <Input {...field} type="number" className="w-full border-gray-300 rounded" />
+                            <FormMessage>{fieldState.error?.message}</FormMessage>
+                          </FormItem>
+                        )}
                       />
                     </td>
                     <td className="px-4 py-3">
-                      <Input 
-                        {...form.register(`vitalsData.${index}.spO2`)} 
-                        type="number"
-                        className="w-full" 
+                      <FormField
+                        control={form.control}
+                        name={`vitalsData.0.spO2`}
+                        render={({ field, fieldState }) => (
+                          <FormItem>
+                            <Input {...field} type="number" className="w-full border-gray-300 rounded" />
+                            <FormMessage>{fieldState.error?.message}</FormMessage>
+                          </FormItem>
+                        )}
                       />
                     </td>
                     <td className="px-4 py-3">
-                      <Input 
-                        {...form.register(`vitalsData.${index}.temperature`)} 
-                        type="number"
-                        step="0.1"
-                        className="w-full" 
+                      <FormField
+                        control={form.control}
+                        name={`vitalsData.0.temperature`}
+                        render={({ field, fieldState }) => (
+                          <FormItem>
+                            <Input {...field} type="number" className="w-full border-gray-300 rounded" />
+                            <FormMessage>{fieldState.error?.message}</FormMessage>
+                          </FormItem>
+                        )}
+                      />
+                    </td>
+                    <td className="px-4 py-3">
+                      <FormField
+                        control={form.control}
+                        name={`vitalsData.0.abnormalityConfirmed`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <Input type="checkbox" {...field} className="rounded border-gray-300" />
+                          </FormItem>
+                        )}
                       />
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </tbody>
+              </table>
+            </div>
           </div>
 
-          {/* Submit */}
-          <Button type="submit" className="w-full mt-8">
+          <Button type="submit" className="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700">
             Submit
           </Button>
         </form>
@@ -259,4 +297,3 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({vitalReading}) => {
 };
 
 export default VitalReadingForm;
-
