@@ -40,6 +40,12 @@ export default function DashboardLayout({
           >
             Vitals Log
           </Link>
+          <Link
+            href="/patient/vitalreadings"
+            className="block text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Journal Entries
+          </Link>
         </nav>
 
         <UserDetails />

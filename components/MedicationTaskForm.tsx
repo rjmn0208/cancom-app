@@ -64,7 +64,7 @@ const formSchema = z.object({
   //medication task fields
   name: z.string(),
   medicineColor: z.string(),
-  dosage: z.number(),
+  dosage: z.number().positive("Dosage must be a positive number").min(0.1, { message: "Dosage must be at least 0.1 mg" }).max(1000, { message: "Dosage cannot exceed 1000 mg" }),
   instructions: z.string(),
   startDate: z.date().nullable(),
   endDate: z.date().nullable(),
