@@ -175,6 +175,7 @@ export interface Task {
   taskCreator: string; // /
   lastModifiedOn: Date;
 
+  TaskList: TaskList
   TaskTag: TaskTag[];
   TaskCreator: User;
   PrerequisiteTask?: Task[];

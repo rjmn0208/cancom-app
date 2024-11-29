@@ -79,13 +79,18 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
 
   const fetchCompletedTasks = async () => {
     const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
     const { data, error } = await supabase
       .from("Task")
       .select(
         "*, TaskTag(*), TaskCreator: User(*), ExerciseTask(*), MedicationTask(*,MedicationTaskSchedule(*)), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))"
       )
       .eq("taskListId", taskListId)
-      .eq("isDone", true);
+      .eq("isDone", true)
+      .or(`isArchived.eq.false,taskCreator.eq.${user?.id}`);  
 
     if (!error && data) setCompletedTasks(data);
   };
