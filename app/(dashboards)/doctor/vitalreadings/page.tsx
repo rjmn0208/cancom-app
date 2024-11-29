@@ -25,7 +25,10 @@ import { createClient } from "@/utils/supabase/client";
 import React, { useEffect, useState } from "react";
 
 const VitalsReadingPage = () => {
-  const [readings, setReadings] = useState<VitalReading[]>();
+  const [readings, setReadings] = useState<VitalReading[]>([]);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false); // State to manage the "Add" modal
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false); // State to manage the "Edit" modal
+  const [selectedReading, setSelectedReading] = useState<VitalReading | null>(null); // Selected reading for editing
 
   const fetchVitalReadings = async () => {
     const supabase = createClient();
@@ -36,55 +39,61 @@ const VitalsReadingPage = () => {
     const { data, error } = await supabase
       .from("VitalReading")
       .select(
-        `
-      *, 
-      Vitals(*),
-      Patient(*, 
-        User(*)),
-      RecordedBy: User!VitalsReading_recordedBy_fkey(*),
-      LastEditedBy: User!VitalReading_lastEditedBy_fkey(*)
-    `,
+        `*,
+        Vitals(*),
+        Patient(*, 
+          User(*)),
+        RecordedBy: User!VitalsReading_recordedBy_fkey(*),
+        LastEditedBy: User!VitalReading_lastEditedBy_fkey(*)
+      `
       )
       .eq("recordedBy", user?.id);
 
-    console.log(data, error);
-
-    if (!error) setReadings(data);
+    if (!error) setReadings(data || []);
   };
 
   const handleDelete = async (vitalReading: VitalReading) => {
     const supabase = createClient();
-    const { data, error } = await supabase
-      .from("VitalReading")
-      .delete()
-      .eq("id", vitalReading.id);
-
+    await supabase.from("VitalReading").delete().eq("id", vitalReading.id);
     await fetchVitalReadings();
   };
 
-  const handleOpenChange = async (open: boolean) => {
-    if (!open) fetchVitalReadings();
+  const handleAddModalClose = () => {
+    setIsAddModalOpen(false);
+    fetchVitalReadings(); // Ensure the table refreshes after adding a record
+  };
+
+  const handleEditModalClose = () => {
+    setIsEditModalOpen(false);
+    setSelectedReading(null); // Clear selected reading
+    fetchVitalReadings(); // Ensure the table refreshes after editing a record
+  };
+
+  const openEditModal = (reading: VitalReading) => {
+    setSelectedReading(reading);
+    setIsEditModalOpen(true);
   };
 
   useEffect(() => {
     fetchVitalReadings();
   }, []);
 
-  if (!readings) return <div>Loading....</div>;
+  if (!readings) return <div>Loading...</div>;
 
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-3xl font-semibold">Vital Readings</h2>
-        <Dialog onOpenChange={handleOpenChange}>
+        {/* Add Vital Reading */}
+        <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
           <DialogTrigger asChild>
-            <Button>Add Vital Reading</Button>
+            <Button onClick={() => setIsAddModalOpen(true)}>Add Vital Reading</Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[900px] w-[900px]">
+          <DialogContent className="sm:max-w-[1100px] w-[1100px]">
             <DialogHeader>
               <DialogTitle>Input Vital Reading Details</DialogTitle>
             </DialogHeader>
-            <VitalReadingForm />
+            <VitalReadingForm onClose={handleAddModalClose} />
           </DialogContent>
         </Dialog>
       </div>
@@ -92,36 +101,34 @@ const VitalsReadingPage = () => {
         <TableCaption>A list of your recent vital readings.</TableCaption>
         <TableHeader>
           <TableRow>
-            <TableHead>ID</TableHead>
             <TableHead>Recorded For (Patient)</TableHead>
             <TableHead>Recorded By</TableHead>
-            <TableHead>Vital</TableHead>
-            <TableHead>Value</TableHead>
             <TableHead>Created At</TableHead>
-            <TableHead>Last Edited By</TableHead>
+            <TableHead>Heart Rate</TableHead>
+            <TableHead>Systolic BP</TableHead>
+            <TableHead>Diastolic BP</TableHead>
+            <TableHead>SPO2</TableHead>
+            <TableHead>Temperature</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {readings.map((reading: VitalReading) => (
-            <TableRow>
-              <TableCell>{reading.id}</TableCell>
+            <TableRow key={reading.id}>
+              {/* Recorded For (Patient) */}
               <TableCell>
-                {reading.Patient.User.firstName}{" "}
-                {reading.Patient.User.middleName}{" "}
+                {reading.Patient.User.firstName} {reading.Patient.User.middleName || ""}{" "}
                 {reading.Patient.User.lastName}
               </TableCell>
+              {/* Recorded By */}
               <TableCell>
                 <p>
-                  {reading.RecordedBy.firstName} {reading.RecordedBy.middleName}{" "}
+                  {reading.RecordedBy.firstName} {reading.RecordedBy.middleName || ""}{" "}
                   {reading.RecordedBy.lastName}
                 </p>
                 <Badge>{reading.RecordedBy.userType}</Badge>
               </TableCell>
-              <TableCell>{reading.Vitals.name}</TableCell>
-              <TableCell>
-                {reading.value} {reading.Vitals.unitOfMeasure}
-              </TableCell>
+              {/* Created At */}
               <TableCell>
                 {new Date(reading.timestamp).toLocaleString(undefined, {
                   year: "numeric",
@@ -132,21 +139,34 @@ const VitalsReadingPage = () => {
                   hour12: true,
                 })}
               </TableCell>
+              {/* Heart Rate */}
+              <TableCell>{reading.Vitals?.heartRate || "N/A"}</TableCell>
+              {/* Systolic BP */}
+              <TableCell>{reading.Vitals?.systolicBP || "N/A"}</TableCell>
+              {/* Diastolic BP */}
+              <TableCell>{reading.Vitals?.diastolicBP || "N/A"}</TableCell>
+              {/* SPO2 */}
+              <TableCell>{reading.Vitals?.spo2 || "N/A"}</TableCell>
+              {/* Temperature */}
+              <TableCell>{reading.Vitals?.temperature || "N/A"}</TableCell>
+              {/* Actions */}
               <TableCell>
-                {reading.LastEditedBy.firstName}{" "}
-                {reading.LastEditedBy.middleName}{" "}
-                {reading.LastEditedBy.lastName}
-              </TableCell>
-              <TableCell>
-                <Dialog onOpenChange={handleOpenChange}>
+                <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
                   <DialogTrigger asChild>
-                    <Button variant={"outline"}>Edit</Button>
+                    <Button variant={"outline"} onClick={() => openEditModal(reading)}>
+                      Edit
+                    </Button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[426px]">
                     <DialogHeader>
-                      <DialogTitle>Input Vital Reading Details</DialogTitle>
+                      <DialogTitle>Edit Vital Reading</DialogTitle>
                     </DialogHeader>
-                    <VitalReadingForm vitalReading={reading} />
+                    {selectedReading && (
+                      <VitalReadingForm
+                        vitalReading={selectedReading}
+                        onClose={handleEditModalClose}
+                      />
+                    )}
                   </DialogContent>
                 </Dialog>
                 <Button
@@ -157,7 +177,7 @@ const VitalsReadingPage = () => {
                   Delete
                 </Button>
               </TableCell>
-            </TableRow> 
+            </TableRow>
           ))}
         </TableBody>
       </Table>
