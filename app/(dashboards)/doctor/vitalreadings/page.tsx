@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/table";
 import VitalReadingForm from "@/components/VitalReadingForm";
 
-import { VitalReading } from "@/lib/types";
+import { UserType, VitalReading } from "@/lib/types";
 import { createClient } from "@/utils/supabase/client";
 import React, { useEffect, useState } from "react";
 
@@ -93,7 +93,7 @@ const VitalsReadingPage = () => {
             <DialogHeader>
               <DialogTitle>Input Vital Reading Details</DialogTitle>
             </DialogHeader>
-            <VitalReadingForm onClose={handleAddModalClose} />
+            <VitalReadingForm userType={UserType.DOCTOR} />
           </DialogContent>
         </Dialog>
       </div>

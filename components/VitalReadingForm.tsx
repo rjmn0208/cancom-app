@@ -1,6 +1,6 @@
 "use client";
 
-import { Patient, User, Vitals } from "@/lib/types";
+import { Patient, User, UserType, Vitals } from "@/lib/types";
 import { createClient } from "@/utils/supabase/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
@@ -50,7 +50,7 @@ const formSchema = z.object({
     required_error: "Please select who recorded the vitals.",
   }),
   patientId: z.number({
-    required_error: "Please select a patient.",
+    required_error: "Please select who is the patient.",
   }),
   vitalsData: z.array(vitalReadingSchema),
   timestamp: z.date({
@@ -60,16 +60,20 @@ const formSchema = z.object({
 
 type FormSchemaType = z.infer<typeof formSchema>;
 
-const VitalReadingForm = () => {
+interface VitalReadingFormProps {
+  userType: UserType,
+}
+
+const VitalReadingForm: React.FC<VitalReadingFormProps> = ({userType}) => {
   const [users, setUsers] = useState<User[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [vitals, setVitals] = useState<Vitals[]>([]);
+  const [defaultRecordedBy, setDefaultRecordedBy] = useState<any>()
+  const [defaultPatientId, setDefaultPatientId] = useState<any>()
 
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      recordedBy: "",
-      patientId: undefined,
       vitalsData: [
         {
           name: "Heart Rate",
@@ -106,6 +110,7 @@ const VitalReadingForm = () => {
     },
   });
 
+
   const fetchUsers = async () => {
     const supabase = createClient();
     const { data, error } = await supabase.from("User").select("*");
@@ -124,9 +129,35 @@ const VitalReadingForm = () => {
     if (!error) setVitals(data);
   };
 
+  const fetchDefaultPatientId = async () => {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const { data, error } = await supabase
+      .from("Patient")
+      .select("id")
+      .eq("userId", user?.id)
+      .single();
+
+    if (!error && data) {
+      setDefaultPatientId(data.id);
+      form.setValue("patientId", data.id); // Set default patientId in the form
+    }
+  };
+
+  const fetchDefaultRecordedBy = async () => {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (user) {
+      setDefaultRecordedBy(user.id);
+      form.setValue("recordedBy", user.id); // Set default recordedBy in the form
+    }
+  };
+
   const onSubmit = async (values: FormSchemaType) => {
     const supabase = createClient();
-
+    console.log('onsubmitvalues', values)
     const vitalReadings = values.vitalsData.map((vital) => {
       const vitalRecord = vitals.find((v) => v.name === vital.name);
       if (!vitalRecord) {
@@ -157,17 +188,13 @@ const VitalReadingForm = () => {
   };
 
   useEffect(() => {
-    fetchUsers();
-    fetchPatients();
-    fetchVitals();
+    fetchUsers(),
+    fetchPatients(),
+    fetchVitals(),
+    fetchDefaultPatientId(),
+    fetchDefaultRecordedBy()
   }, []);
 
-  const watchedValues = form.watch();
-
-  // Log the form values whenever they change
-  useEffect(() => {
-    console.log("Form values updated:", watchedValues);
-  }, [watchedValues]);
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
@@ -186,7 +213,9 @@ const VitalReadingForm = () => {
                     <FormLabel>Recorded By</FormLabel>
                     <Select
                       onValueChange={(value) => field.onChange(value)}
-                      defaultValue={field.value?.toString() || ""}
+                      defaultValue={field.value || ""}
+                      disabled={userType !== UserType.ADMIN}
+                      value={defaultRecordedBy}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -216,8 +245,12 @@ const VitalReadingForm = () => {
                   <FormItem>
                     <FormLabel>Patient</FormLabel>
                     <Select
-                      onValueChange={(value) => field.onChange(Number(value))}
+                      onValueChange={(value) =>
+                        field.onChange(value ? Number(value) : null)
+                      }
                       defaultValue={field.value?.toString() || ""}
+                      disabled={userType === UserType.PATIENT}
+                      value={defaultPatientId}
                     >
                       <FormControl>
                         <SelectTrigger>

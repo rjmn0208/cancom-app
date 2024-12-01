@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/client";
 import { Pencil, Trash2 } from "lucide-react";
-import { VitalReading, Vitals } from "@/lib/types";
+import { UserType, VitalReading, Vitals } from "@/lib/types";
 import {
   Dialog,
   DialogClose,
@@ -98,7 +98,7 @@ export default function VitalsManagement() {
               <DialogHeader>
                 <DialogTitle>Input Vital Reading Details</DialogTitle>
               </DialogHeader>
-              <VitalReadingForm />
+              <VitalReadingForm userType={UserType.ADMIN}/>
             </DialogContent>
           </Dialog>
         </div>
@@ -165,7 +165,7 @@ export default function VitalsManagement() {
                           <DialogHeader>
                             <DialogTitle>Input Vital Details</DialogTitle>
                           </DialogHeader>
-                          <VitalReadingForm />
+                          <VitalReadingForm userType={UserType.ADMIN}/>
                         </DialogContent>
                       </Dialog>
                       <Button
