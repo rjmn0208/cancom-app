@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { z } from "zod";
 import {
   Form,
@@ -12,7 +12,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import { Address, AddressType } from "@/lib/types";
+import { Address } from "@/lib/types";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import {
@@ -24,22 +24,23 @@ import {
 } from "./ui/select";
 
 const formSchema = z.object({
-  addressLineOne: z.string(),
-  addressLineTwo: z.string(),
-  city: z.string(),
-  province: z.string(),
-  postalCode: z.string(),
-  country: z.string(),
-  type: z.enum(["PERMANENT", "CURRENT"]).nullable(),
+  addressLineOne: z.string().min(1, "Address Line One is required"),
+  addressLineTwo: z.string().optional(),
+  city: z.string().min(1, "City is required"),
+  province: z.string().min(1, "Province is required"),
+  postalCode: z.string().optional(),
+  country: z.string().min(1, "Country is required"),
+  type: z.enum(["PERMANENT", "CURRENT"], "Select a valid address type").nullable(),
 });
 
 type FormSchemaType = z.infer<typeof formSchema>;
 
 interface AddressFormProps {
   address?: Address;
+  onFinish?: () => void;
 }
 
-const AddressForm: React.FC<AddressFormProps> = ({ address }) => {
+const AddressForm: React.FC<AddressFormProps> = ({ address, onFinish }) => {
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
     defaultValues: address
@@ -63,28 +64,43 @@ const AddressForm: React.FC<AddressFormProps> = ({ address }) => {
         },
   });
 
+  const [loading, setLoading] = useState(false); // Track loading state
+
   const onSubmit = async (values: FormSchemaType) => {
+    setLoading(true); // Start loading
     const supabase = createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    console.log(values);
-    if (address) {
-      const { data, error } = await supabase
-        .from("Address")
-        .update(values)
-        .eq("id", address.id);
 
-      if (!error) toast.success("Address edited successfully");
-    } else {
-      const { data, error } = await supabase.from("Address").insert([
-        {
-          ...values,
-          userId: user?.id,
-        },
-      ]);
+    try {
+      if (!user) throw new Error("User not authenticated");
 
-      if (!error) toast.success("Address saved successfully");
+      if (address) {
+        const { error } = await supabase
+          .from("Address")
+          .update(values)
+          .eq("id", address.id);
+        if (error) throw error;
+
+        toast.success("Address edited successfully");
+      } else {
+        const { error } = await supabase
+          .from("Address")
+          .insert([{ ...values, userId: user.id }]);
+        if (error) throw error;
+
+        toast.success("Address saved successfully");
+      }
+
+      if (onFinish) onFinish(); // Navigate only on success
+    } catch (error: any) {
+      const message =
+        error.message || "Something went wrong. Please try again later.";
+      toast.error(`Error: ${message}`);
+      console.error("Error saving address:", error);
+    } finally {
+      setLoading(false); // Stop loading
     }
   };
 
@@ -122,7 +138,7 @@ const AddressForm: React.FC<AddressFormProps> = ({ address }) => {
           name="city"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>City: </FormLabel>
+              <FormLabel>City:</FormLabel>
               <FormControl>
                 <Input {...field} type="text" />
               </FormControl>
@@ -177,7 +193,7 @@ const AddressForm: React.FC<AddressFormProps> = ({ address }) => {
               <FormLabel>Address Type:</FormLabel>
               <Select
                 onValueChange={field.onChange}
-                defaultValue={field.value?.toString()}
+                defaultValue={field.value || ""}
               >
                 <FormControl>
                   <SelectTrigger>
@@ -185,19 +201,42 @@ const AddressForm: React.FC<AddressFormProps> = ({ address }) => {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {["PERMANENT", "CURRENT"].map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="PERMANENT">PERMANENT</SelectItem>
+                  <SelectItem value="CURRENT">CURRENT</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full mt-4">
-          Submit
+        <Button
+          type="submit"
+          className="w-full mt-4 flex justify-center items-center gap-2"
+          disabled={loading} // Disable button when loading
+        >
+          {loading && (
+            <svg
+              className="animate-spin h-5 w-5 text-white"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+              ></path>
+            </svg>
+          )}
+          {loading ? "Submitting..." : "Submit"}
         </Button>
       </form>
     </Form>
