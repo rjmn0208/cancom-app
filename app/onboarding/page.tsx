@@ -5,7 +5,6 @@ import { z } from "zod";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -39,18 +38,18 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 
 const formSchema = z.object({
-  //user fields
+  // User fields
   honorific: z.enum(["MR", "MS", "MRS", "DR", "PROF", "REV"]).nullable(),
-  firstName: z.string(),
-  middleName: z.string(),
-  lastName: z.string(),
+  firstName: z.string().min(1, "First Name is required"),
+  middleName: z.string().optional(),
+  lastName: z.string().min(1, "Last Name is required"),
   userType: z
     .enum(["PATIENT", "CARETAKER", "DOCTOR", "MEDICAL_STAFF"])
     .nullable(),
   gender: z.enum(["MALE", "FEMALE", "OTHER"]).nullable(),
-  phone: z.string(),
+  phone: z.string().min(1, "Phone number is required"),
 
-  //patient fields
+  // Patient fields
   cancerTypeId: z.number().nullable(),
   cancerStage: z.enum([
     "STAGE_0",
@@ -58,19 +57,19 @@ const formSchema = z.object({
     "STAGE_II",
     "STAGE_III",
     "STAGE_IV",
-  ]),
-  diagnosisDate: z.date(),
+  ]).optional(),
+  diagnosisDate: z.date().optional(),
 
-  //doctor fields
-  licenseNumber: z.string(),
+  // Doctor fields
+  licenseNumber: z.string().optional(),
 
-  //caretaker fields
-  qualifications: z.string(),
+  // Caretaker fields
+  qualifications: z.string().optional(),
 
-  //medical staff fields
+  // Medical staff fields
   medicalInstitutionId: z.number().nullable(),
-  designation: z.string(),
-  staffLicenseNumber: z.string(),
+  designation: z.string().optional(),
+  staffLicenseNumber: z.string().optional(),
 });
 
 type FormSchemaType = z.infer<typeof formSchema>;
@@ -88,7 +87,6 @@ const OnboardingPage = () => {
   const [medicalInstitutions, setMedicalInstitutions] = useState<
     MedicalInstitution[]
   >([]);
-
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [currentProgressBarValue, setCurrentProgressBarValue] =
     useState<number>(0);
@@ -104,18 +102,18 @@ const OnboardingPage = () => {
       gender: null,
       phone: "",
 
-      //patient fields
+      // Patient fields
       cancerTypeId: null,
       cancerStage: "STAGE_0",
-      diagnosisDate: new Date(),
+      diagnosisDate: undefined,
 
-      //doctor fields
+      // Doctor fields
       licenseNumber: "",
 
-      //caretaker field
+      // Caretaker field
       qualifications: "",
 
-      //medstaff field
+      // Medical staff field
       medicalInstitutionId: null,
       designation: "",
       staffLicenseNumber: "",
@@ -149,9 +147,8 @@ const OnboardingPage = () => {
       data: { user },
     } = await supabase.auth.getUser();
 
-    const { data: UserData, error: UserError } = await supabase
-      .from("User")
-      .insert([
+    try {
+      const { error } = await supabase.from("User").insert([
         {
           id: user?.id,
           honorific: values.honorific,
@@ -164,57 +161,66 @@ const OnboardingPage = () => {
         },
       ]);
 
-    if (UserError) throw new Error(UserError.message);
+      if (error) throw new Error(error.message);
 
-    switch (values.userType) {
-      case "PATIENT":
-        const { error: patientError } = await supabase.from("Patient").insert({
-          userId: user?.id,
-          cancerTypeId: values.cancerTypeId,
-          cancerStage: values.cancerStage,
-          diagnosisDate: values.diagnosisDate,
-        });
-        if (patientError) throw patientError;
-        break;
+      toast.success("User details saved successfully");
 
-      case "CARETAKER":
-        const { error: caretakerError } = await supabase
-          .from("Caretaker")
-          .insert({
+      switch (values.userType) {
+        case "PATIENT":
+          const { error: patientError } = await supabase.from("Patient").insert(
+            {
+              userId: user?.id,
+              cancerTypeId: values.cancerTypeId,
+              cancerStage: values.cancerStage,
+              diagnosisDate: values.diagnosisDate,
+            }
+          );
+          if (patientError) throw patientError;
+          break;
+
+        case "CARETAKER":
+          const { error: caretakerError } = await supabase
+            .from("Caretaker")
+            .insert({
+              userId: user?.id,
+              qualifications: values.qualifications,
+            });
+          if (caretakerError) throw caretakerError;
+          break;
+
+        case "DOCTOR":
+          const { error: doctorError } = await supabase.from("Doctor").insert({
             userId: user?.id,
-            qualifications: values.qualifications,
+            licenseNumber: values.licenseNumber,
           });
-        if (caretakerError) throw caretakerError;
-        break;
+          if (doctorError) throw doctorError;
+          break;
 
-      case "DOCTOR":
-        const { error: doctorError } = await supabase.from("Doctor").insert({
-          userId: user?.id,
-          licenseNumber: values.licenseNumber,
-        });
-        if (doctorError) throw doctorError;
-        break;
+        case "MEDICAL_STAFF":
+          const { error: staffError } = await supabase
+            .from("MedicalStaff")
+            .insert({
+              userId: user?.id,
+              medicalInstitutionId: values.medicalInstitutionId,
+              designation: values.designation,
+              staffLicenseNumber: values.staffLicenseNumber,
+            });
+          if (staffError) throw staffError;
+          break;
+      }
 
-      case "MEDICAL_STAFF":
-        const { error: staffError } = await supabase
-          .from("MedicalStaff")
-          .insert({
-            userId: user?.id,
-            medicalInstitutionId: values.medicalInstitutionId,
-            designation: values.designation,
-            staffLicenseNumber: values.staffLicenseNumber,
-          });
-        if (staffError) throw staffError;
-        break;
+      setCurrentPage(2); // Move to the next page
+      setCurrentProgressBarValue(50);
+    } catch (error: any) {
+      toast.error(error.message || "An error occurred");
     }
-
-    toast.success("User details saved successfully");
   };
 
   useEffect(() => {
     fetchCancerTypes();
     fetchMedicalInstitutions();
   }, []);
+
 
   return (
     <div className="flex flex-row min-h-screen">
@@ -611,21 +617,19 @@ const OnboardingPage = () => {
               </Form>
             )}
 
-            {currentPage === 2 && (
-              <>
-                <AddressForm />{" "}
-                <Button
-                  className="my-4"
-                  onClick={() => {
-                    refreshSession();
-                    router.push(`/${userTypeState?.toLocaleLowerCase}`);
-                    setCurrentProgressBarValue(100);
-                  }}
-                >
-                  Finish
-                </Button>
-              </>
-            )}
+              {currentPage === 2 && (
+                <>
+                  <AddressForm
+                    onFinish={async () => {
+                      // Refresh session and navigate after successful address submission
+                      await refreshSession();
+                      router.push(`/${userTypeState?.toLocaleLowerCase()}`);
+                      setCurrentProgressBarValue(100); // Update progress bar
+                    }}
+                  />
+                </>
+              )}
+
           </CardContent>
         </Card>
       </div>
