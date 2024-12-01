@@ -68,7 +68,7 @@ interface TaskCardProps {
   onMedScheduleMarkTaken: (sched: MedicationTaskSchedule) => void;
   onMedScheduleDelete: (sched: MedicationTaskSchedule) => void;
   onMedScheduleUndoTaken: (sched: MedicationTaskSchedule) => void;
-  permission?: ListPermission
+  permission?: ListPermission;
 }
 
 export default function TaskCard({
@@ -81,7 +81,8 @@ export default function TaskCard({
   onTagDelete,
   onMedScheduleMarkTaken,
   onMedScheduleDelete,
-  onMedScheduleUndoTaken
+  onMedScheduleUndoTaken,
+  permission,
 }: TaskCardProps) {
   const [subTasks, setSubTasks] = useState<Task[]>([]);
   const [prerequisites, setPrerequisites] = useState<Task[]>([]);
@@ -163,9 +164,15 @@ export default function TaskCard({
               Purpose: {task.AppointmentTask[0].purpose}
             </p>
             {task.AppointmentTask[0].doctorsNotes && (
-              <p className="text-sm opacity-70">
-                Notes: {task.AppointmentTask[0].doctorsNotes}
-              </p>
+              <div className="text-sm opacity-70">
+                <p>Notes:</p>
+                <div
+                  className="max-h-32 overflow-y-auto p-2 rounded-md"
+                  style={{ whiteSpace: "pre-wrap", wordWrap: "break-word" }}
+                >
+                  {task.AppointmentTask[0].doctorsNotes}
+                </div>
+              </div>
             )}
           </div>
         );
@@ -235,30 +242,38 @@ export default function TaskCard({
               )}
             </p>
             <div className="space-y-2">
-              <h1 className='text-md font-semibold'>Medication Schedules:</h1>
-              {task.MedicationTask[0].MedicationTaskSchedule.map((sched: MedicationTaskSchedule) => (
-                <div key={sched.id} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={sched.id.toString()}
-                    checked={sched.isTaken}
-                    onCheckedChange={(checked) => 
-
-                      {
-                        checked ? 
-                        onMedScheduleMarkTaken(sched)
-                        :
-                        onMedScheduleUndoTaken(sched)
-                      }
-                    }
+              <h1 className="text-md font-semibold">Medication Schedules:</h1>
+              {task.MedicationTask[0].MedicationTaskSchedule.map(
+                (sched: MedicationTaskSchedule) => (
+                  <div key={sched.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={sched.id.toString()}
+                      checked={sched.isTaken}
+                      onCheckedChange={(checked) => {
+                        if (permission === ListPermission.MANAGER) {
+                          checked
+                            ? onMedScheduleMarkTaken(sched)
+                            : onMedScheduleUndoTaken(sched);
+                        }
+                      }}
+                      disabled={permission !== ListPermission.MANAGER}
                     />
-                  <Label htmlFor={sched.id.toString()}>
-                    {format(new Date(`1970-01-01T${sched.time}`), "hh:mm a")}
-                  </Label>
-                  <Button variant='ghost' size='icon' className="p-0 w-5 h-5 flex items-center justify-center" onClick={() => onMedScheduleDelete(sched)}>
-                    <X size={12} />
-                  </Button>
-                </div>
-              ))}
+                    <Label htmlFor={sched.id.toString()}>
+                      {format(new Date(`1970-01-01T${sched.time}`), "hh:mm a")}
+                    </Label>
+                    {permission === ListPermission.MANAGER && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="p-0 w-5 h-5 flex items-center justify-center"
+                        onClick={() => onMedScheduleDelete(sched)}
+                      >
+                        <X size={12} />
+                      </Button>
+                    )}
+                  </div>
+                )
+              )}
             </div>
             {task.MedicationTask[0].instructions && (
               <p className="text-sm opacity-70">
@@ -401,12 +416,14 @@ export default function TaskCard({
             >
               <UndoIcon className="w-4 h-4" />
             </Button>
-            <Button
-              variant="destructive"
-              onClick={() => handleAction("delete")}
-            >
-              <Trash2Icon className="w-4 h-4" />
-            </Button>
+            {permission === ListPermission.MANAGER && (
+              <Button
+                variant="destructive"
+                onClick={() => handleAction("delete")}
+              >
+                <Trash2Icon className="w-4 h-4" />
+              </Button>
+            )}
           </>
         ) : (
           <div className="flex flex-wrap gap-2">
@@ -467,60 +484,70 @@ export default function TaskCard({
                 <TaskTagForm task={task} />
               </DialogContent>
             </Dialog>
-
-            <Dialog onOpenChange={onOpenChange}>
-              <DialogTrigger asChild>
-                <Button variant="outline">
-                  <EditIcon className="w-4 h-4" />
+            {permission === ListPermission.MANAGER && (
+              <>
+                <Dialog onOpenChange={onOpenChange}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline">
+                      <EditIcon className="w-4 h-4" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="h-4/5 overflow-y-auto w-11/12">
+                    <DialogHeader>
+                      <DialogTitle className="text-lg">
+                        Now editing task titled{" "}
+                        <p className="italic">"{task.title}"</p>
+                      </DialogTitle>
+                      <DialogDescription>
+                        Fill in the necessary details
+                      </DialogDescription>
+                    </DialogHeader>
+                    {task.type === TaskType.GENERAL && (
+                      <GeneralTaskForm task={task} />
+                    )}
+                    {task.type === TaskType.APPOINTMENT && (
+                      <AppointmentTaskForm
+                        appointmentTask={{
+                          ...task,
+                          ...task.AppointmentTask[0],
+                        }}
+                      />
+                    )}
+                    {task.type === TaskType.MEDICATION && (
+                      <MedicationTaskForm
+                        medicationTask={{ ...task, ...task.MedicationTask[0] }}
+                      />
+                    )}
+                    {task.type === TaskType.EXERCISE && (
+                      <ExerciseTaskForm
+                        exerciseTask={{ ...task, ...task.ExerciseTask[0] }}
+                      />
+                    )}
+                    {task.type === TaskType.TREATMENT && (
+                      <TreatmentTaskForm
+                        treatmentTask={{ ...task, ...task.TreatmentTask[0] }}
+                      />
+                    )}
+                  </DialogContent>
+                </Dialog>
+                <Button
+                  variant="destructive"
+                  onClick={() => handleAction("delete")}
+                >
+                  <Trash2Icon className="w-4 h-4" />
                 </Button>
-              </DialogTrigger>
-              <DialogContent className="h-4/5 overflow-y-auto w-11/12">
-                <DialogHeader>
-                  <DialogTitle className="text-lg">
-                    Now editing task titled{" "}
-                    <p className="italic">"{task.title}"</p>
-                  </DialogTitle>
-                  <DialogDescription>
-                    Fill in the necessary details
-                  </DialogDescription>
-                </DialogHeader>
-                {task.type === TaskType.GENERAL && (
-                  <GeneralTaskForm task={task} />
-                )}
-                {task.type === TaskType.APPOINTMENT && (
-                  <AppointmentTaskForm
-                    appointmentTask={{ ...task, ...task.AppointmentTask[0] }}
-                  />
-                )}
-                {task.type === TaskType.MEDICATION && (
-                  <MedicationTaskForm
-                    medicationTask={{ ...task, ...task.MedicationTask[0] }}
-                  />
-                )}
-                {task.type === TaskType.EXERCISE && (
-                  <ExerciseTaskForm
-                    exerciseTask={{ ...task, ...task.ExerciseTask[0] }}
-                  />
-                )}
-                {task.type === TaskType.TREATMENT && (
-                  <TreatmentTaskForm
-                    treatmentTask={{ ...task, ...task.TreatmentTask[0] }}
-                  />
-                )}
-              </DialogContent>
-            </Dialog>
+              </>
+            )}
+
             {task.type !== TaskType.MEDICATION && (
-              <Button variant="outline" onClick={() => handleAction("complete")}>
+              <Button
+                variant="outline"
+                onClick={() => handleAction("complete")}
+              >
                 <CheckCircleIcon className="w-4 h-4" />
               </Button>
             )}
-            <Button
-              variant="destructive"
-              onClick={() => handleAction("delete")}
-            >
-              <Trash2Icon className="w-4 h-4" />
-            </Button>
-            
+
             <div className="flex flex-wrap gap-2">
               {task.TaskTag.map((tag: TaskTag) => (
                 <div
@@ -539,6 +566,7 @@ export default function TaskCard({
                   </Button>
                 </div>
               ))}
+              
             </div>
           </div>
         )}

@@ -80,6 +80,7 @@ export interface VitalReading {
   RecordedBy: User;
   LastEditedBy: User;
 }
+
 export interface Patient {
   id: number;
   userId: string;

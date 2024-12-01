@@ -36,6 +36,12 @@ async function AdminDashboard() {
       >
         Manage TaskLists
       </Link>
+      <Link
+        href="/admin/medical-institutions"
+        className="block text-muted-foreground hover:text-foreground transition-colors"
+      >
+        Manage Medical Institutions
+      </Link>
     </>
   );
 }

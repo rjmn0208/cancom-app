@@ -112,6 +112,10 @@ export default function ProfilePage() {
     });
   };
 
+  const handleOpenChange = async(open: boolean) => {
+    if(!open) fetchProfileData()
+  }
+
   useEffect(() => {
     fetchProfileData();
   }, []);
@@ -141,7 +145,7 @@ export default function ProfilePage() {
               {user.userType}
             </Badge>
           </div>
-          <Dialog>
+          <Dialog onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
               <Button>Edit Profile</Button>
             </DialogTrigger>

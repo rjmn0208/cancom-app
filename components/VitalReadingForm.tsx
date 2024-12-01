@@ -1,11 +1,13 @@
-"use client";
+"use client"
 
-import React, { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { createClient } from "@/utils/supabase/client";
-import { toast } from "sonner";
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+import { toast } from "sonner"
+import { CalendarIcon } from "lucide-react"
+import { format } from "date-fns"
+
+import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
@@ -13,287 +15,290 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "./ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { Input } from "./ui/input";
-import { Button } from "./ui/button";
-import { Patient, User, UserType } from "@/lib/types";
-import { jwtDecode } from "jwt-decode";
-import { readUserSession } from "@/utils/read-user-session";
+} from "@/components/ui/form"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { useEffect, useState } from "react"
+import { Patient, User, Vitals } from "@/lib/types"
+import { createClient } from "@/utils/supabase/client"
+import { Badge } from "./ui/badge"
+
+const vitalSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  unitOfMeasure: z.string(),
+  description: z.string(),
+  value: z.number().nullable(),
+})
 
 const formSchema = z.object({
-  recordedBy: z.string(),
-  patientId: z
-    .number({
-      required_error: "Patient is required",
-    })
-    .nullable()
-    .refine((value) => value !== null, {
-      message: "Patient is required",
-    }),
-  vitalsData: z.array(
-    z.object({
-      date: z.string().nonempty("Date is required"),
-      heartRate: z.string().nonempty("Heart rate is required").transform((val) => parseFloat(val)),
-      systolicBloodPressure: z.string().nonempty("Systolic BP is required").transform((val) => parseFloat(val)),
-      diastolicBloodPressure: z.string().nonempty("Diastolic BP is required").transform((val) => parseFloat(val)),
-      spO2: z.string().nonempty("SPO2 is required").transform((val) => parseFloat(val)),
-      temperature: z.string().nonempty("Temperature is required").transform((val) => parseFloat(val)),
-      abnormalityConfirmed: z.boolean().optional(),
-    })
-  ),
-});
+  recordedBy: z.string({
+    required_error: "Please select who recorded the vitals.",
+  }),
+  patientId: z.number({
+    required_error: "Please select a patient.",
+  }),
+  vitalsData: z.array(vitalSchema),
+  timestamp: z.date({
+    required_error: "Please select a date and time.",
+  })
+})
 
-type FormSchemaType = z.infer<typeof formSchema>;
+type FormSchemaType = z.infer<typeof formSchema>
 
-interface VitalReadingFormProps {
-  onClose: () => void; // Prop to handle closing the modal
-}
 
-const VitalReadingForm: React.FC<VitalReadingFormProps> = ({ onClose }) => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [userType, setUserType] = useState<UserType>();
-
-  const fetchUserType = async () => {
-    const {
-      data: { session },
-    } = await readUserSession();
-    if (session) {
-      const accessToken = session.access_token;
-      const decodedToken: any = jwtDecode(accessToken);
-      setUserType(decodedToken.user_type as UserType);
-    }
-  };
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const supabase = createClient();
-
-      const { data: users, error: UserError } = await supabase.from("User").select("*");
-      if (!UserError && users) setUsers(users);
-
-      const { data: patients, error: PatientError } = await supabase.from("Patient").select("*, User(*)");
-      if (!PatientError && patients) setPatients(patients);
-    };
-    fetchData();
-    fetchUserType();
-  }, []);
+const VitalReadingForm = () => {
+  const [users, setUsers] = useState<User[]>([]) 
+  const [patients, setPatients] = useState<Patient[]>([])
+  const [vitals, setVitals] = useState<Vitals[]>([])
 
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       recordedBy: "",
-      patientId: null,
+      patientId: undefined,
       vitalsData: [
-        {
-          date: "",
-          heartRate: "",
-          systolicBloodPressure: "",
-          diastolicBloodPressure: "",
-          spO2: "",
-          temperature: "",
-          abnormalityConfirmed: false,
-        },
+        { name: "Heart Rate", unitOfMeasure: "bpm", description: "Heart rate", value: 0 },
+        { name: "Blood Pressure (Systolic)", unitOfMeasure: "mmHg", description: "Systolic blood pressure", value: 0 },
+        { name: "Blood Pressure (Diastolic)", unitOfMeasure: "mmHg", description: "Diastolic blood pressure", value: 0 },
+        { name: "SpO2", unitOfMeasure: "%", description: "Blood oxygen saturation", value: 0 },
+        { name: "Temperature", unitOfMeasure: "°C", description: "Body temperature", value: 0 },
       ],
+      timestamp: new Date(),
     },
-  });
+  })
 
-  const onSubmit = async (values: FormSchemaType) => {
-    const abnormalReadings = values.vitalsData.filter((reading) => {
-      const isAbnormal =
-        reading.heartRate < 40 ||
-        reading.heartRate > 200 ||
-        reading.systolicBloodPressure < 90 ||
-        reading.systolicBloodPressure > 200 ||
-        reading.diastolicBloodPressure < 60 ||
-        reading.diastolicBloodPressure > 120 ||
-        reading.spO2 < 90 ||
-        reading.spO2 > 100 ||
-        reading.temperature < 30 ||
-        reading.temperature > 45;
+  const fetchUsers =async () => { 
+    const supabase = createClient()
 
-      return isAbnormal && !reading.abnormalityConfirmed;
-    });
-
-    if (abnormalReadings.length > 0) {
-      toast.error("Abnormal readings detected. Please confirm abnormalities.");
-      return;
+    const {data, error} = await supabase
+    .from('User')
+    .select('*')
+    
+    if(!error) setUsers(data)
+    
     }
 
-    console.log("FormValues", values);
-    toast.success("Vital Reading recorded successfully!");
-    onClose(); // Call the parent-provided close function
-  };
+    const fetchPatients = async () => { 
+      const supabase = createClient()
+
+      const {data, error} = await supabase
+      .from('Patient')
+      .select(`*, User(*)`)
+      
+      if(!error) setPatients(data)
+      
+    }
+
+    const fetchVitals = async () => {
+      const supabase = createClient()
+
+      const {data, error} = await supabase
+      .from('Vitals')
+      .select('*')
+
+      if(!error) setVitals(data)
+    }
+
+    const onSubmit = async (values: FormSchemaType) => {
+      const supabase = createClient();
+      
+      const vitalReadings = values.vitalsData.map((vital) => {
+        const vitalRecord = vitals.find((v) => v.name === vital.name);
+
+        if (!vitalRecord) {
+          throw new Error(`No matching vital found for name: ${vital.name}`);
+        }
+
+        return {
+          recordedBy: values.recordedBy,
+          patientId: values.patientId,
+          value: vital.value,
+          timestamp: values.timestamp,
+          lastEditedBy: values.recordedBy,
+          vitalsId: vitalRecord.id,
+        };
+      });
+
+      const { error } = await supabase.from("VitalReading").insert(vitalReadings);
+
+      if (error) throw error;
+
+      toast.success("Vital readings recorded successfully");
+
+    };
+
+  useEffect(() => {
+    fetchUsers()
+    fetchPatients();
+    fetchVitals()
+  }, [])
+  
 
   return (
-    <div className="w-full max-w-[1200px] mx-auto px-6 py-4">
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-6">
-            <FormField
-              control={form.control}
-              name="recordedBy"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-lg font-semibold">Recorded By</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={userType !== UserType.ADMIN}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Recorder" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {users.map((user: User) => (
-                        <SelectItem key={user.id} value={user.id}>
-                          {user.firstName} {user.lastName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+    <Card className="w-full max-w-4xl mx-auto">
+      <CardHeader>
+        <CardTitle>Input Vital Reading Details</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="recordedBy"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Recorded By</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Recorder" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {users.map((user) => (
+                          <SelectItem key={user.id} value={user.id}>
+                            <div>
+                              {user.firstName} {" "}
+                              {user.middleName} {" "}
+                              {user.lastName} {" "}
+                            
+                            </div>
+                            <Badge className="my-2">
+                              {user.userType}
+                            </Badge>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="patientId"
-              render={({ field, fieldState }) => (
-                <FormItem>
-                  <FormLabel className="text-lg font-semibold">Patient</FormLabel>
-                  <Select onValueChange={(value) => field.onChange(Number(value))} defaultValue={field.value?.toString()} disabled={userType === UserType.PATIENT}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Patient" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {patients.map((patient: Patient) => (
-                        <SelectItem key={patient.id} value={patient.id.toString()}>
-                          {patient.User.firstName} {patient.User.middleName || ""} {patient.User?.lastName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage>{fieldState.error?.message}</FormMessage>
-                </FormItem>
-              )}
-            />
-          </div>
+              <FormField
+                control={form.control}
+                name="patientId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Patient</FormLabel>
+                    <Select onValueChange={(value) => field.onChange(parseInt(value))} defaultValue={field.value?.toString()}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Patient" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {patients.map((patient) => (
+                          <SelectItem key={patient.id} value={patient.id.toString()}>
+                            {patient.User.firstName} {" "}
+                            {patient.User.middleName} {" "}
+                            {patient.User.lastName} {" "}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-          <div className="mb-8">
-            <div className="w-full overflow-y-auto rounded-lg border border-gray-300 max-h-[400px]">
-              <table className="w-full text-sm text-left text-gray-700 divide-y divide-gray-200">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="px-4 py-3">Date</th>
-                    <th className="px-4 py-3">Heart Rate</th>
-                    <th className="px-4 py-3">Systolic BP</th>
-                    <th className="px-4 py-3">Diastolic BP</th>
-                    <th className="px-4 py-3">SPO2</th>
-                    <th className="px-4 py-3">Temperature</th>
-                    <th className="px-4 py-3">Confirm Abnormality</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="bg-white hover:bg-gray-50">
-                    <td className="px-4 py-3">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Heart Rate</TableHead>
+                  <TableHead>Systolic BP</TableHead>
+                  <TableHead>Diastolic BP</TableHead>
+                  <TableHead>SPO2</TableHead>
+                  <TableHead>Temperature</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell>
+                  <FormField
+                    control={form.control}
+                    name="timestamp"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Start Date:</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="datetime-local"
+                            {...field}
+                            value={
+                              field.value ? format(field.value, "yyyy-MM-dd'T'HH:mm") : ""
+                            }
+                            onChange={(e) => field.onChange(new Date(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  </TableCell>
+
+                  {form.watch('vitalsData').map((vital, index) => (
+                    <TableCell key={vital.id}>
                       <FormField
                         control={form.control}
-                        name={`vitalsData.0.date`}
-                        render={({ field, fieldState }) => (
-                          <FormItem>
-                            <Input {...field} type="datetime-local" className="w-full border-gray-300 rounded" />
-                            <FormMessage>{fieldState.error?.message}</FormMessage>
-                          </FormItem>
-                        )}
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <FormField
-                        control={form.control}
-                        name={`vitalsData.0.heartRate`}
-                        render={({ field, fieldState }) => (
-                          <FormItem>
-                            <Input {...field} type="number" className="w-full border-gray-300 rounded" />
-                            <FormMessage>{fieldState.error?.message}</FormMessage>
-                          </FormItem>
-                        )}
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <FormField
-                        control={form.control}
-                        name={`vitalsData.0.systolicBloodPressure`}
-                        render={({ field, fieldState }) => (
-                          <FormItem>
-                            <Input {...field} type="number" className="w-full border-gray-300 rounded" />
-                            <FormMessage>{fieldState.error?.message}</FormMessage>
-                          </FormItem>
-                        )}
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <FormField
-                        control={form.control}
-                        name={`vitalsData.0.diastolicBloodPressure`}
-                        render={({ field, fieldState }) => (
-                          <FormItem>
-                            <Input {...field} type="number" className="w-full border-gray-300 rounded" />
-                            <FormMessage>{fieldState.error?.message}</FormMessage>
-                          </FormItem>
-                        )}
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <FormField
-                        control={form.control}
-                        name={`vitalsData.0.spO2`}
-                        render={({ field, fieldState }) => (
-                          <FormItem>
-                            <Input {...field} type="number" className="w-full border-gray-300 rounded" />
-                            <FormMessage>{fieldState.error?.message}</FormMessage>
-                          </FormItem>
-                        )}
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <FormField
-                        control={form.control}
-                        name={`vitalsData.0.temperature`}
-                        render={({ field, fieldState }) => (
-                          <FormItem>
-                            <Input {...field} type="number" className="w-full border-gray-300 rounded" />
-                            <FormMessage>{fieldState.error?.message}</FormMessage>
-                          </FormItem>
-                        )}
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <FormField
-                        control={form.control}
-                        name={`vitalsData.0.abnormalityConfirmed`}
+                        name={`vitalsData.${index}.value`}
                         render={({ field }) => (
                           <FormItem>
-                            <Input type="checkbox" {...field} className="rounded border-gray-300" />
+                            <FormControl>
+                              <Input
+                                type="number"
+                                {...field}
+                                onChange={(e) => field.onChange(Number(e.target.valueAsNumber))}
+                              />
+                            </FormControl>
+                            <FormMessage />
                           </FormItem>
                         )}
                       />
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
+                    </TableCell>
+                  ))}
+                  
+                </TableRow>
+              </TableBody>
+            </Table>
 
-          <Button type="submit" className="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700">
-            Submit
-          </Button>
-        </form>
-      </Form>
-    </div>
-  );
-};
+            <Button type="submit" className="w-full">Submit</Button>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
+  )
+}
 
-export default VitalReadingForm;
+export default VitalReadingForm
+

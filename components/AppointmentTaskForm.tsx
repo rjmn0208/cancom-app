@@ -77,7 +77,7 @@ const AppointmentTaskForm: React.FC<AppointmentTaskFormProps> = ({
             ? new Date(appointmentTask.appointmentDate)
             : null,
           purpose: appointmentTask.purpose,
-          doctorsNotes: appointmentTask.purpose,
+          doctorsNotes: appointmentTask.doctorsNotes,
         }
       : {
           //base task fields
@@ -189,7 +189,7 @@ const AppointmentTaskForm: React.FC<AppointmentTaskFormProps> = ({
             doctorsNotes: values.doctorsNotes,
           },
         ]);
-
+        console.log(AppointmentTaskError)
       if (!AppointmentTaskError)
         toast.success("Appointment details saved sucessfully");
     }

@@ -417,6 +417,7 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
                   onMedScheduleMarkTaken={handleMedTaskScheduleMarkTaken}
                   onMedScheduleDelete={handleMedTaskScheduleTakenDelete}
                   onMedScheduleUndoTaken={handleMedTaskScheduleUndoTaken}
+                  permission={listPermission}
                 />
               ))}
             </SheetContent>
@@ -442,6 +443,7 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
                   onMedScheduleMarkTaken={handleMedTaskScheduleMarkTaken}
                   onMedScheduleDelete={handleMedTaskScheduleTakenDelete}
                   onMedScheduleUndoTaken={handleMedTaskScheduleUndoTaken}
+                  permission={listPermission}
                 />
               ))}
             </SheetContent>
@@ -515,6 +517,7 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
                     onMedScheduleMarkTaken={handleMedTaskScheduleMarkTaken}
                     onMedScheduleDelete={handleMedTaskScheduleTakenDelete}
                     onMedScheduleUndoTaken={handleMedTaskScheduleUndoTaken}
+                    permission={listPermission}
                   />
                 ))}
             </div>
