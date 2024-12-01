@@ -14,7 +14,13 @@ import {
   FormLabel,
   FormMessage,
 } from "./ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { Patient, User, UserType } from "@/lib/types";
@@ -55,6 +61,8 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({ onClose }) => {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [userType, setUserType] = useState<UserType>();
 
+  const supabase = createClient();
+
   const fetchUserType = async () => {
     const {
       data: { session },
@@ -66,16 +74,35 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({ onClose }) => {
     }
   };
 
+  // Function to check abnormal values
+  const isAbnormal = (field: string, value: number): boolean => {
+    const ranges = {
+      heartRate: { min: 40, max: 200 },
+      systolicBloodPressure: { min: 90, max: 200 },
+      diastolicBloodPressure: { min: 60, max: 120 },
+      spO2: { min: 90, max: 100 },
+      temperature: { min: 30, max: 45 },
+    };
+    const range = ranges[field];
+    return value < range.min || value > range.max;
+  };
+
   useEffect(() => {
     const fetchData = async () => {
-      const supabase = createClient();
+      try {
+        const { data: users, error: userError } = await supabase.from("User").select("*");
+        if (userError) throw userError;
+        setUsers(users || []);
 
-      const { data: users, error: UserError } = await supabase.from("User").select("*");
-      if (!UserError && users) setUsers(users);
-
-      const { data: patients, error: PatientError } = await supabase.from("Patient").select("*, User(*)");
-      if (!PatientError && patients) setPatients(patients);
+        const { data: patients, error: patientError } = await supabase.from("Patient").select("*, User(*)");
+        if (patientError) throw patientError;
+        setPatients(patients || []);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        toast.error("Failed to load users or patients.");
+      }
     };
+
     fetchData();
     fetchUserType();
   }, []);
@@ -121,9 +148,26 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({ onClose }) => {
       return;
     }
 
-    console.log("FormValues", values);
-    toast.success("Vital Reading recorded successfully!");
-    onClose(); // Call the parent-provided close function
+    try {
+      const { error } = await supabase.from("VitalReading").insert(
+        values.vitalsData.map((reading) => ({
+          recordedBy: values.recordedBy,
+          patientId: values.patientId,
+          vitalsId: null,
+          value: reading.heartRate,
+          timestamp: reading.date,
+          lastEditedBy: values.recordedBy,
+        }))
+      );
+
+      if (error) throw error;
+
+      toast.success("Vital readings saved successfully!");
+      onClose();
+    } catch (error) {
+      console.error("Error saving data:", error);
+      toast.error("Failed to save vital readings.");
+    }
   };
 
   return (
@@ -171,7 +215,7 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({ onClose }) => {
                     <SelectContent>
                       {patients.map((patient: Patient) => (
                         <SelectItem key={patient.id} value={patient.id.toString()}>
-                          {patient.User.firstName} {patient.User.middleName || ""} {patient.User?.lastName}
+                          {patient.User.firstName} {patient.User.middleName || ""} {patient.User.lastName}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -188,100 +232,127 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({ onClose }) => {
                 <thead className="bg-gray-100">
                   <tr>
                     <th className="px-4 py-3">Date</th>
-                    <th className="px-4 py-3">Heart Rate</th>
-                    <th className="px-4 py-3">Systolic BP</th>
-                    <th className="px-4 py-3">Diastolic BP</th>
-                    <th className="px-4 py-3">SPO2</th>
-                    <th className="px-4 py-3">Temperature</th>
+                    <th className="px-4 py-3">Heart Rate (BPM)</th>
+                    <th className="px-4 py-3">Systolic BP (mmHg)</th>
+                    <th className="px-4 py-3">Diastolic BP (mmHg)</th>
+                    <th className="px-4 py-3">SPO2 (%)</th>
+                    <th className="px-4 py-3">Temperature (°C)</th>
                     <th className="px-4 py-3">Confirm Abnormality</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="bg-white hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <FormField
-                        control={form.control}
-                        name={`vitalsData.0.date`}
-                        render={({ field, fieldState }) => (
-                          <FormItem>
-                            <Input {...field} type="datetime-local" className="w-full border-gray-300 rounded" />
-                            <FormMessage>{fieldState.error?.message}</FormMessage>
-                          </FormItem>
-                        )}
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <FormField
-                        control={form.control}
-                        name={`vitalsData.0.heartRate`}
-                        render={({ field, fieldState }) => (
-                          <FormItem>
-                            <Input {...field} type="number" className="w-full border-gray-300 rounded" />
-                            <FormMessage>{fieldState.error?.message}</FormMessage>
-                          </FormItem>
-                        )}
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <FormField
-                        control={form.control}
-                        name={`vitalsData.0.systolicBloodPressure`}
-                        render={({ field, fieldState }) => (
-                          <FormItem>
-                            <Input {...field} type="number" className="w-full border-gray-300 rounded" />
-                            <FormMessage>{fieldState.error?.message}</FormMessage>
-                          </FormItem>
-                        )}
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <FormField
-                        control={form.control}
-                        name={`vitalsData.0.diastolicBloodPressure`}
-                        render={({ field, fieldState }) => (
-                          <FormItem>
-                            <Input {...field} type="number" className="w-full border-gray-300 rounded" />
-                            <FormMessage>{fieldState.error?.message}</FormMessage>
-                          </FormItem>
-                        )}
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <FormField
-                        control={form.control}
-                        name={`vitalsData.0.spO2`}
-                        render={({ field, fieldState }) => (
-                          <FormItem>
-                            <Input {...field} type="number" className="w-full border-gray-300 rounded" />
-                            <FormMessage>{fieldState.error?.message}</FormMessage>
-                          </FormItem>
-                        )}
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <FormField
-                        control={form.control}
-                        name={`vitalsData.0.temperature`}
-                        render={({ field, fieldState }) => (
-                          <FormItem>
-                            <Input {...field} type="number" className="w-full border-gray-300 rounded" />
-                            <FormMessage>{fieldState.error?.message}</FormMessage>
-                          </FormItem>
-                        )}
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <FormField
-                        control={form.control}
-                        name={`vitalsData.0.abnormalityConfirmed`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <Input type="checkbox" {...field} className="rounded border-gray-300" />
-                          </FormItem>
-                        )}
-                      />
-                    </td>
-                  </tr>
+                  {form.watch("vitalsData").map((vital, index) => (
+                    <tr key={index} className="bg-white hover:bg-gray-50">
+                      <td className="px-4 py-3">
+                        <FormField
+                          control={form.control}
+                          name={`vitalsData.${index}.date`}
+                          render={({ field, fieldState }) => (
+                            <FormItem>
+                              <Input {...field} type="datetime-local" />
+                              <FormMessage>{fieldState.error?.message}</FormMessage>
+                            </FormItem>
+                          )}
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <FormField
+                          control={form.control}
+                          name={`vitalsData.${index}.heartRate`}
+                          render={({ field, fieldState }) => (
+                            <FormItem>
+                              <Input {...field} type="number" />
+                              {field.value &&
+                                !form.watch(`vitalsData.${index}.abnormalityConfirmed`) &&
+                                isAbnormal("heartRate", parseFloat(field.value)) && (
+                                  <p className="text-yellow-500 font-bold text-xs">WARNING: Abnormal Heart Rate!</p>
+                                )}
+                              <FormMessage>{fieldState.error?.message}</FormMessage>
+                            </FormItem>
+                          )}
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <FormField
+                          control={form.control}
+                          name={`vitalsData.${index}.systolicBloodPressure`}
+                          render={({ field, fieldState }) => (
+                            <FormItem>
+                              <Input {...field} type="number" />
+                              {field.value &&
+                                !form.watch(`vitalsData.${index}.abnormalityConfirmed`) &&
+                                isAbnormal("systolicBloodPressure", parseFloat(field.value)) && (
+                                  <p className="text-yellow-500 font-bold text-xs">WARNING: Abnormal Systolic BP!</p>
+                                )}
+                              <FormMessage>{fieldState.error?.message}</FormMessage>
+                            </FormItem>
+                          )}
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <FormField
+                          control={form.control}
+                          name={`vitalsData.${index}.diastolicBloodPressure`}
+                          render={({ field, fieldState }) => (
+                            <FormItem>
+                              <Input {...field} type="number" />
+                              {field.value &&
+                                !form.watch(`vitalsData.${index}.abnormalityConfirmed`) &&
+                                isAbnormal("diastolicBloodPressure", parseFloat(field.value)) && (
+                                  <p className="text-yellow-500 font-bold text-xs">WARNING: Abnormal Diastolic BP!</p>
+                                )}
+                              <FormMessage>{fieldState.error?.message}</FormMessage>
+                            </FormItem>
+                          )}
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <FormField
+                          control={form.control}
+                          name={`vitalsData.${index}.spO2`}
+                          render={({ field, fieldState }) => (
+                            <FormItem>
+                              <Input {...field} type="number" />
+                              {field.value &&
+                                !form.watch(`vitalsData.${index}.abnormalityConfirmed`) &&
+                                isAbnormal("spO2", parseFloat(field.value)) && (
+                                  <p className="text-yellow-500 font-bold text-xs">WARNING: Abnormal SPO2!</p>
+                                )}
+                              <FormMessage>{fieldState.error?.message}</FormMessage>
+                            </FormItem>
+                          )}
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <FormField
+                          control={form.control}
+                          name={`vitalsData.${index}.temperature`}
+                          render={({ field, fieldState }) => (
+                            <FormItem>
+                              <Input {...field} type="number" />
+                              {field.value &&
+                                !form.watch(`vitalsData.${index}.abnormalityConfirmed`) &&
+                                isAbnormal("temperature", parseFloat(field.value)) && (
+                                  <p className="text-yellow-500 font-bold text-xs">WARNING: Abnormal Temperature!</p>
+                                )}
+                              <FormMessage>{fieldState.error?.message}</FormMessage>
+                            </FormItem>
+                          )}
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <FormField
+                          control={form.control}
+                          name={`vitalsData.${index}.abnormalityConfirmed`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <Input type="checkbox" {...field} />
+                            </FormItem>
+                          )}
+                        />
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
