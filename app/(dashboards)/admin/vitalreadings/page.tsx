@@ -165,7 +165,7 @@ export default function VitalsManagement() {
                           <DialogHeader>
                             <DialogTitle>Input Vital Details</DialogTitle>
                           </DialogHeader>
-                          <VitalReadingForm vitalReading={reading} />
+                          <VitalReadingForm />
                         </DialogContent>
                       </Dialog>
                       <Button

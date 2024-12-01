@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
-import { toast } from "sonner"
-import { CalendarIcon } from "lucide-react"
-import { format } from "date-fns"
-
-import { Button } from "@/components/ui/button"
+import { Patient, User, Vitals } from "@/lib/types";
+import { createClient } from "@/utils/supabase/client";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect, useState } from "react";
+import { useForm, useFieldArray } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import {
   Form,
   FormControl,
@@ -15,27 +15,15 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"
+} from "./ui/form";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { Calendar } from "@/components/ui/calendar"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+} from "./ui/select";
+import { Badge } from "./ui/badge";
 import {
   Table,
   TableBody,
@@ -43,20 +31,20 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { useEffect, useState } from "react"
-import { Patient, User, Vitals } from "@/lib/types"
-import { createClient } from "@/utils/supabase/client"
-import { Badge } from "./ui/badge"
+} from "./ui/table";
+import { Input } from "./ui/input";
+import { format } from "date-fns";
+import { Button } from "./ui/button";
 
-const vitalSchema = z.object({
-  id: z.number(),
+// Define the vital reading schema
+const vitalReadingSchema = z.object({
   name: z.string(),
   unitOfMeasure: z.string(),
   description: z.string(),
   value: z.number().nullable(),
-})
+});
 
+// Main form schema
 const formSchema = z.object({
   recordedBy: z.string({
     required_error: "Please select who recorded the vitals.",
@@ -64,19 +52,18 @@ const formSchema = z.object({
   patientId: z.number({
     required_error: "Please select a patient.",
   }),
-  vitalsData: z.array(vitalSchema),
+  vitalsData: z.array(vitalReadingSchema),
   timestamp: z.date({
     required_error: "Please select a date and time.",
-  })
-})
+  }),
+});
 
-type FormSchemaType = z.infer<typeof formSchema>
-
+type FormSchemaType = z.infer<typeof formSchema>;
 
 const VitalReadingForm = () => {
-  const [users, setUsers] = useState<User[]>([]) 
-  const [patients, setPatients] = useState<Patient[]>([])
-  const [vitals, setVitals] = useState<Vitals[]>([])
+  const [users, setUsers] = useState<User[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [vitals, setVitals] = useState<Vitals[]>([]);
 
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
@@ -84,82 +71,103 @@ const VitalReadingForm = () => {
       recordedBy: "",
       patientId: undefined,
       vitalsData: [
-        { name: "Heart Rate", unitOfMeasure: "bpm", description: "Heart rate", value: 0 },
-        { name: "Blood Pressure (Systolic)", unitOfMeasure: "mmHg", description: "Systolic blood pressure", value: 0 },
-        { name: "Blood Pressure (Diastolic)", unitOfMeasure: "mmHg", description: "Diastolic blood pressure", value: 0 },
-        { name: "SpO2", unitOfMeasure: "%", description: "Blood oxygen saturation", value: 0 },
-        { name: "Temperature", unitOfMeasure: "°C", description: "Body temperature", value: 0 },
+        {
+          name: "Heart Rate",
+          unitOfMeasure: "bpm",
+          description: "Heart rate",
+          value: 0,
+        },
+        {
+          name: "Blood Pressure (Systolic)",
+          unitOfMeasure: "mmHg",
+          description: "Systolic blood pressure",
+          value: 0,
+        },
+        {
+          name: "Blood Pressure (Diastolic)",
+          unitOfMeasure: "mmHg",
+          description: "Diastolic blood pressure",
+          value: 0,
+        },
+        {
+          name: "SP02 (Blood Oxygen Saturation)",
+          unitOfMeasure: "%",
+          description: "Blood oxygen saturation",
+          value: 0,
+        },
+        {
+          name: "Body Temperature",
+          unitOfMeasure: "°C",
+          description: "Body temperature",
+          value: 0,
+        },
       ],
       timestamp: new Date(),
     },
-  })
+  });
 
-  const fetchUsers =async () => { 
-    const supabase = createClient()
+  const fetchUsers = async () => {
+    const supabase = createClient();
+    const { data, error } = await supabase.from("User").select("*");
+    if (!error) setUsers(data);
+  };
 
-    const {data, error} = await supabase
-    .from('User')
-    .select('*')
-    
-    if(!error) setUsers(data)
-    
+  const fetchPatients = async () => {
+    const supabase = createClient();
+    const { data, error } = await supabase.from("Patient").select(`*, User(*)`);
+    if (!error) setPatients(data);
+  };
+
+  const fetchVitals = async () => {
+    const supabase = createClient();
+    const { data, error } = await supabase.from("Vitals").select("*");
+    if (!error) setVitals(data);
+  };
+
+  const onSubmit = async (values: FormSchemaType) => {
+    const supabase = createClient();
+
+    const vitalReadings = values.vitalsData.map((vital) => {
+      const vitalRecord = vitals.find((v) => v.name === vital.name);
+      if (!vitalRecord) {
+        throw new Error(`No matching vital found for name: ${vital.name}`);
+      }
+
+      return {
+        recordedBy: values.recordedBy,
+        patientId: values.patientId,
+        value: vital.value,
+        timestamp: values.timestamp.toISOString(),
+        lastEditedBy: values.recordedBy,
+        vitalsId: vitalRecord.id,
+      };
+    });
+
+    const { error } = await supabase
+      .from("VitalReading")
+      .insert(vitalReadings);
+
+    if (error) {
+      toast.error("Failed to record vital readings");
+      console.error(error);
+      return;
     }
 
-    const fetchPatients = async () => { 
-      const supabase = createClient()
-
-      const {data, error} = await supabase
-      .from('Patient')
-      .select(`*, User(*)`)
-      
-      if(!error) setPatients(data)
-      
-    }
-
-    const fetchVitals = async () => {
-      const supabase = createClient()
-
-      const {data, error} = await supabase
-      .from('Vitals')
-      .select('*')
-
-      if(!error) setVitals(data)
-    }
-
-    const onSubmit = async (values: FormSchemaType) => {
-      const supabase = createClient();
-      
-      const vitalReadings = values.vitalsData.map((vital) => {
-        const vitalRecord = vitals.find((v) => v.name === vital.name);
-
-        if (!vitalRecord) {
-          throw new Error(`No matching vital found for name: ${vital.name}`);
-        }
-
-        return {
-          recordedBy: values.recordedBy,
-          patientId: values.patientId,
-          value: vital.value,
-          timestamp: values.timestamp,
-          lastEditedBy: values.recordedBy,
-          vitalsId: vitalRecord.id,
-        };
-      });
-
-      const { error } = await supabase.from("VitalReading").insert(vitalReadings);
-
-      if (error) throw error;
-
-      toast.success("Vital readings recorded successfully");
-
-    };
+    toast.success("Vital readings recorded successfully");
+  };
 
   useEffect(() => {
-    fetchUsers()
+    fetchUsers();
     fetchPatients();
-    fetchVitals()
-  }, [])
-  
+    fetchVitals();
+  }, []);
+
+  const watchedValues = form.watch();
+
+  // Log the form values whenever they change
+  useEffect(() => {
+    console.log("Form values updated:", watchedValues);
+  }, [watchedValues]);
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
@@ -176,7 +184,10 @@ const VitalReadingForm = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Recorded By</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={(value) => field.onChange(value)}
+                      defaultValue={field.value?.toString() || ""}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select Recorder" />
@@ -186,14 +197,9 @@ const VitalReadingForm = () => {
                         {users.map((user) => (
                           <SelectItem key={user.id} value={user.id}>
                             <div>
-                              {user.firstName} {" "}
-                              {user.middleName} {" "}
-                              {user.lastName} {" "}
-                            
+                              {user.firstName} {user.middleName} {user.lastName}{" "}
                             </div>
-                            <Badge className="my-2">
-                              {user.userType}
-                            </Badge>
+                            <Badge className="my-2">{user.userType}</Badge>
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -209,7 +215,10 @@ const VitalReadingForm = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Patient</FormLabel>
-                    <Select onValueChange={(value) => field.onChange(parseInt(value))} defaultValue={field.value?.toString()}>
+                    <Select
+                      onValueChange={(value) => field.onChange(Number(value))}
+                      defaultValue={field.value?.toString() || ""}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select Patient" />
@@ -217,10 +226,12 @@ const VitalReadingForm = () => {
                       </FormControl>
                       <SelectContent>
                         {patients.map((patient) => (
-                          <SelectItem key={patient.id} value={patient.id.toString()}>
-                            {patient.User.firstName} {" "}
-                            {patient.User.middleName} {" "}
-                            {patient.User.lastName} {" "}
+                          <SelectItem
+                            key={patient.id}
+                            value={patient.id.toString()}
+                          >
+                            {patient.User.firstName} {patient.User.middleName}{" "}
+                            {patient.User.lastName}{" "}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -245,41 +256,46 @@ const VitalReadingForm = () => {
               <TableBody>
                 <TableRow>
                   <TableCell>
-                  <FormField
-                    control={form.control}
-                    name="timestamp"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Start Date:</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="datetime-local"
-                            {...field}
-                            value={
-                              field.value ? format(field.value, "yyyy-MM-dd'T'HH:mm") : ""
-                            }
-                            onChange={(e) => field.onChange(new Date(e.target.value))}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <FormField
+                      control={form.control}
+                      name="timestamp"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Start Date:</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="datetime-local"
+                              {...field}
+                              value={
+                                field.value
+                                  ? format(field.value, "yyyy-MM-dd'T'HH:mm")
+                                  : ""
+                              }
+                              onChange={(e) =>
+                                field.onChange(new Date(e.target.value))
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </TableCell>
 
-                  {form.watch('vitalsData').map((vital, index) => (
-                    <TableCell key={vital.id}>
+                  {form.watch("vitalsData").map((vital, index) => (
+                    <TableCell key={vital.name}>
                       <FormField
                         control={form.control}
                         name={`vitalsData.${index}.value`}
                         render={({ field }) => (
                           <FormItem>
                             <FormControl>
-                              <Input
-                                type="number"
-                                {...field}
-                                onChange={(e) => field.onChange(Number(e.target.valueAsNumber))}
-                              />
+                            <Input
+                              type="number"
+                              {...field}
+                              value={field.value ? Number(field.value) : 0}
+                              onChange={(e) => field.onChange(Number(e.target.value))}
+                            />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -287,18 +303,18 @@ const VitalReadingForm = () => {
                       />
                     </TableCell>
                   ))}
-                  
                 </TableRow>
               </TableBody>
             </Table>
 
-            <Button type="submit" className="w-full">Submit</Button>
+            <Button type="submit" className="w-full">
+              Submit
+            </Button>
           </form>
         </Form>
       </CardContent>
     </Card>
-  )
-}
+  );
+};
 
-export default VitalReadingForm
-
+export default VitalReadingForm;
