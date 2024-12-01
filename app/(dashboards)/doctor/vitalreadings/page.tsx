@@ -115,7 +115,7 @@ const VitalsReadingPage = () => {
         <TableBody>
           {readings.map((reading: VitalReading) => (
             <TableRow key={reading.id}>
-              {/* Recorded For (Patient) */}
+              {/* Recorded For (Patient) */}  
               <TableCell>
                 {reading.Patient.User.firstName} {reading.Patient.User.middleName || ""}{" "}
                 {reading.Patient.User.lastName}
