@@ -291,3 +291,13 @@ export interface TaskTag {
   CreatedBy: User;
   Task: Task;
 }
+
+export interface TaskComment{
+  id: number;
+  taskId: number
+  authorId: string;
+  content: string;
+  timestamp: Date
+
+  Author: User
+}

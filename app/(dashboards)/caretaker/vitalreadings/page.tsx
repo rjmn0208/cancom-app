@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/table";
 import VitalReadingForm from "@/components/VitalReadingForm";
 
-import { VitalReading } from "@/lib/types";
+import { UserType, VitalReading } from "@/lib/types";
 import { createClient } from "@/utils/supabase/client";
 import React, { useEffect, useState } from "react";
 
@@ -82,7 +82,7 @@ const VitalsReadingPage = () => {
           </DialogTrigger>
           <DialogContent className="sm:max-w-[900px] w-[900px]">
             
-            <VitalReadingForm />
+            <VitalReadingForm userType={UserType.CARETAKER}/>
           </DialogContent>
         </Dialog>
       </div>
@@ -144,7 +144,7 @@ const VitalsReadingPage = () => {
                     <DialogHeader>
                       <DialogTitle>Input Vital Reading Details</DialogTitle>
                     </DialogHeader>
-                    <VitalReadingForm/>
+                    <VitalReadingForm userType={UserType.CARETAKER}/>
                   </DialogContent>
                 </Dialog>
                 <Button
