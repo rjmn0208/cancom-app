@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/table";
 import VitalReadingForm from "@/components/VitalReadingForm";
 
-import { VitalReading } from "@/lib/types";
+import { UserType, VitalReading } from "@/lib/types";
 import { createClient } from "@/utils/supabase/client";
 import React, { useEffect, useState } from "react";
 
@@ -88,7 +88,7 @@ const VitalsReadingPage = () => {
             <DialogHeader>
               <DialogTitle>Input Vital Reading Details</DialogTitle>
             </DialogHeader>
-            <VitalReadingForm />
+            <VitalReadingForm userType={UserType.PATIENT}/>
           </DialogContent>
         </Dialog>
       </div>
@@ -150,7 +150,7 @@ const VitalsReadingPage = () => {
                     <DialogHeader>
                       <DialogTitle>Input Vital Reading Details</DialogTitle>
                     </DialogHeader>
-                    <VitalReadingForm vitalReading={reading} />
+                    <VitalReadingForm userType={UserType.PATIENT} />
                   </DialogContent>
                 </Dialog>
                 <Button
