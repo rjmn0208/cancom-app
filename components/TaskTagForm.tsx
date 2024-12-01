@@ -63,8 +63,6 @@ const TaskTagForm: React.FC<TaskTagFormProps> = ({ taskTag, task }) => {
         },
       ]);
 
-      console.log(error);
-
       if (!error) toast.success("Task Tag added successfully");
     }
   };

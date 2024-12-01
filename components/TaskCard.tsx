@@ -36,6 +36,7 @@ import {
   Tag,
   X,
   LucideFlaskConical,
+  MessageSquare,
 } from "lucide-react";
 import {
   Dialog,
@@ -56,6 +57,7 @@ import { toast } from "sonner";
 import { Checkbox } from "./ui/checkbox";
 import { Label } from "./ui/label";
 import { format } from "date-fns";
+import TaskCommentForm from "./TaskCommentForm";
 
 interface TaskCardProps {
   task: Task;
@@ -482,6 +484,20 @@ export default function TaskCard({
                   <DialogTitle>Add a tag to this task</DialogTitle>
                 </DialogHeader>
                 <TaskTagForm task={task} />
+              </DialogContent>
+            </Dialog>
+
+            <Dialog onOpenChange={onOpenChange}>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <MessageSquare  className="w-4 h-4" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add a comment</DialogTitle>
+                </DialogHeader>
+                <TaskCommentForm task={task} />
               </DialogContent>
             </Dialog>
             {permission === ListPermission.MANAGER && (

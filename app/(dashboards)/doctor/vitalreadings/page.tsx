@@ -140,15 +140,15 @@ const VitalsReadingPage = () => {
                 })}
               </TableCell>
               {/* Heart Rate */}
-              <TableCell>{reading.Vitals?.heartRate || "N/A"}</TableCell>
+              <TableCell>{reading.Vitals?.name === 'Heart Rate' || "N/A"}</TableCell>
               {/* Systolic BP */}
-              <TableCell>{reading.Vitals?.systolicBP || "N/A"}</TableCell>
+              <TableCell>{reading.Vitals?.name === 'Blood Pressure (Systolic)' || "N/A"}</TableCell>
               {/* Diastolic BP */}
-              <TableCell>{reading.Vitals?.diastolicBP || "N/A"}</TableCell>
+              <TableCell>{reading.Vitals?.name === 'Blood Pressure (Diastolic)' || "N/A"}</TableCell>
               {/* SPO2 */}
-              <TableCell>{reading.Vitals?.spo2 || "N/A"}</TableCell>
+              <TableCell>{reading.Vitals?.name === 'SP02 (Blood Oxygen Saturation)' || "N/A"}</TableCell>
               {/* Temperature */}
-              <TableCell>{reading.Vitals?.temperature || "N/A"}</TableCell>
+              <TableCell>{reading.Vitals?.name === 'Body Temperature' || "N/A"}</TableCell>
               {/* Actions */}
               <TableCell>
                 <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
