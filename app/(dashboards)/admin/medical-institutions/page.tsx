@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/table";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
-import { Pencil, Trash2 } from "lucide-react"; // Import icons
+import { Pencil, Trash2 } from "lucide-react";
 import InstitutionForm from "@/components/InstitutionForm";
 
 export interface Address {
