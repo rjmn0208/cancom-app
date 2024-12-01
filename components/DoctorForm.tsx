@@ -14,6 +14,7 @@ import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { Doctor } from "@/lib/types";
 import { createClient } from "@/utils/supabase/client";
+import { toast } from "sonner";
 
 const formSchema = z.object({
   licenseNumber: z.string(),
@@ -46,6 +47,8 @@ const DoctorForm: React.FC<DoctorFormProps> = ({ doctor }) => {
           licenseNumber: values.licenseNumber,
         })
         .eq("id", doctor.id);
+
+        if(!error) toast.success('License number updated successfully')
     } else {
       const supabase = createClient();
       const {
@@ -56,6 +59,8 @@ const DoctorForm: React.FC<DoctorFormProps> = ({ doctor }) => {
         userId: user?.id,
         licenseNumber: values.licenseNumber,
       });
+
+      if(!error) toast.success('License number saved successfully')
     }
   };
 

@@ -81,9 +81,7 @@ const VitalsReadingPage = () => {
             <Button>Add Vital Reading</Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[900px] w-[900px]">
-            <DialogHeader>
-              <DialogTitle>Input Vital Reading Details</DialogTitle>
-            </DialogHeader>
+            
             <VitalReadingForm />
           </DialogContent>
         </Dialog>
@@ -146,7 +144,7 @@ const VitalsReadingPage = () => {
                     <DialogHeader>
                       <DialogTitle>Input Vital Reading Details</DialogTitle>
                     </DialogHeader>
-                    <VitalReadingForm vitalReading={reading} />
+                    <VitalReadingForm/>
                   </DialogContent>
                 </Dialog>
                 <Button

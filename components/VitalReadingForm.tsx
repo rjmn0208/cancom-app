@@ -94,7 +94,7 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({ onClose }) => {
         if (userError) throw userError;
         setUsers(users || []);
 
-        const { data: patients, error: patientError } = await supabase.from("Patient").select("*, User(*)");
+        const { data: patients, error: patientError } = await supabase.from("Patient").select(", User()");
         if (patientError) throw patientError;
         setPatients(patients || []);
       } catch (error) {
@@ -263,7 +263,7 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({ onClose }) => {
                             <FormItem>
                               <Input {...field} type="number" />
                               {field.value &&
-                                !form.watch(`vitalsData.${index}.abnormalityConfirmed`) &&
+                                !form.watch(vitalsData.${index}.abnormalityConfirmed) &&
                                 isAbnormal("heartRate", parseFloat(field.value)) && (
                                   <p className="text-yellow-500 font-bold text-xs">WARNING: Abnormal Heart Rate!</p>
                                 )}
@@ -280,7 +280,7 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({ onClose }) => {
                             <FormItem>
                               <Input {...field} type="number" />
                               {field.value &&
-                                !form.watch(`vitalsData.${index}.abnormalityConfirmed`) &&
+                                !form.watch(vitalsData.${index}.abnormalityConfirmed) &&
                                 isAbnormal("systolicBloodPressure", parseFloat(field.value)) && (
                                   <p className="text-yellow-500 font-bold text-xs">WARNING: Abnormal Systolic BP!</p>
                                 )}
@@ -297,7 +297,7 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({ onClose }) => {
                             <FormItem>
                               <Input {...field} type="number" />
                               {field.value &&
-                                !form.watch(`vitalsData.${index}.abnormalityConfirmed`) &&
+                                !form.watch(vitalsData.${index}.abnormalityConfirmed) &&
                                 isAbnormal("diastolicBloodPressure", parseFloat(field.value)) && (
                                   <p className="text-yellow-500 font-bold text-xs">WARNING: Abnormal Diastolic BP!</p>
                                 )}
@@ -314,7 +314,7 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({ onClose }) => {
                             <FormItem>
                               <Input {...field} type="number" />
                               {field.value &&
-                                !form.watch(`vitalsData.${index}.abnormalityConfirmed`) &&
+                                !form.watch(vitalsData.${index}.abnormalityConfirmed) &&
                                 isAbnormal("spO2", parseFloat(field.value)) && (
                                   <p className="text-yellow-500 font-bold text-xs">WARNING: Abnormal SPO2!</p>
                                 )}
@@ -331,7 +331,7 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({ onClose }) => {
                             <FormItem>
                               <Input {...field} type="number" />
                               {field.value &&
-                                !form.watch(`vitalsData.${index}.abnormalityConfirmed`) &&
+                                !form.watch(vitalsData.${index}.abnormalityConfirmed) &&
                                 isAbnormal("temperature", parseFloat(field.value)) && (
                                   <p className="text-yellow-500 font-bold text-xs">WARNING: Abnormal Temperature!</p>
                                 )}

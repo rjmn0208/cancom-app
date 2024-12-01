@@ -70,6 +70,7 @@ const ListMemberForm: React.FC<ListMembershipFormProps> = ({
       .neq("id", user?.id)
       .neq('userType', UserType.ADMIN)
       .neq('userType', UserType.MEDICAL_STAFF)
+      .neq('userType', UserType.PATIENT)
 
     if (!error) {
       setUsers(data);
