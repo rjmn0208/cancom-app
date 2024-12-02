@@ -332,8 +332,6 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
         return <Pill className="h-4 w-4" />;
       case "APPOINTMENT":
         return <Stethoscope className="h-4 w-4" />;
-      case "JOURNAL":
-        return <BookOpen className="h-4 w-4" />;
       case "TREATMENT":
         return <Cross className="h-4 w-4" />;
       default:
