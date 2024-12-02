@@ -123,7 +123,7 @@ const VitalsReadingPage = () => {
             <Button onClick={() => setIsAddModalOpen(true)}>Add Vital Reading</Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[1100px] w-[1100px]">
-            <VitalReadingForm userType={UserType.DOCTOR} onSubmitSuccess={handleAddSuccess} />
+            <VitalReadingForm userType={UserType.ADMIN} onSubmitSuccess={handleAddSuccess} />
           </DialogContent>
         </Dialog>
       </div>

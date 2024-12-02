@@ -50,6 +50,8 @@ const VitalsReadingPage = () => {
   const supabase = createClient();
 
   const fetchVitalReadings = async () => {
+    const {data: {user}} = await supabase.auth.getUser()
+
     const { data, error } = await supabase
       .from("VitalReading")
       .select(
@@ -60,7 +62,8 @@ const VitalsReadingPage = () => {
         Vitals(name),
         Patient(*, User(*)),
         RecordedBy: User!VitalsReading_recordedBy_fkey(*)`
-      );
+      )
+      .eq('recordedBy', user?.id)
 
     if (!error) {
       const groupedReadings = groupReadingsByPatientAndTimestamp(data || []);
@@ -123,7 +126,7 @@ const VitalsReadingPage = () => {
             <Button onClick={() => setIsAddModalOpen(true)}>Add Vital Reading</Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[1100px] w-[1100px]">
-            <VitalReadingForm userType={UserType.DOCTOR} onSubmitSuccess={handleAddSuccess} />
+            <VitalReadingForm userType={UserType.CARETAKER} onSubmitSuccess={handleAddSuccess} />
           </DialogContent>
         </Dialog>
       </div>

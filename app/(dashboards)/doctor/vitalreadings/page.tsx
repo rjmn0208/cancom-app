@@ -50,6 +50,8 @@ const VitalsReadingPage = () => {
   const supabase = createClient();
 
   const fetchVitalReadings = async () => {
+    const {data: {user}} = await supabase.auth.getUser()
+
     const { data, error } = await supabase
       .from("VitalReading")
       .select(
@@ -60,7 +62,9 @@ const VitalsReadingPage = () => {
         Vitals(name),
         Patient(*, User(*)),
         RecordedBy: User!VitalsReading_recordedBy_fkey(*)`
-      );
+      )
+      .eq('recordedBy', user?.id)
+      
 
     if (!error) {
       const groupedReadings = groupReadingsByPatientAndTimestamp(data || []);
