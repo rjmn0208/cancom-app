@@ -179,7 +179,7 @@ const VitalsReadingPage = () => {
                     onClick={() => handleDeleteGroup(reading.patientId, reading.timestamp)}
                     className="p-2 border-gray-300 hover:bg-gray-100 text-red-500"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4 text-red-600" />
                   </Button>
                 </TableCell>
               </TableRow>

@@ -123,7 +123,7 @@ export default function ManageMedicalValues() {
                         size="icon"
                         onClick={() => handleVitalsDelete(vital)}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4 text-red-600" />
                       </Button>
                     </div>
                   </TableCell>
@@ -182,7 +182,7 @@ export default function ManageMedicalValues() {
                         size="icon"
                         onClick={() => handleCancerTypeDelete(cancerType)}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4 text-red-600" />
                       </Button>
                     </div>
                   </TableCell>
