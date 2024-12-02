@@ -25,7 +25,6 @@ import { UserType, VitalReading } from "@/lib/types";
 import { createClient } from "@/utils/supabase/client";
 import React, { useEffect, useState } from "react";
 
-// Helper function to group readings by patientId and timestamp
 const groupReadingsByPatientAndTimestamp = (readings: VitalReading[]) => {
   const grouped = readings.reduce((acc: any, reading: VitalReading) => {
     const key = `${reading.patientId}-${reading.timestamp}`;
@@ -88,9 +87,9 @@ const VitalsReadingPage = () => {
     }
   };
 
-  const handleAddSuccess = () => {
-    setIsAddModalOpen(false); // Close modal
-    fetchVitalReadings(); // Refresh table
+  const handleAddSuccess = async () => {
+    await fetchVitalReadings(); // Refresh the table data first
+    setIsAddModalOpen(false); // Close modal only after successful data refresh
   };
 
   useEffect(() => {

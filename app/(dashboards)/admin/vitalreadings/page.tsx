@@ -1,188 +1,191 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { createClient } from "@/utils/supabase/client";
-import { Pencil, Trash2 } from "lucide-react";
-import { UserType, VitalReading, Vitals } from "@/lib/types";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { DialogTitle } from "@mui/material";
-import VitalsForm from "@/components/VitalsForm";
 import VitalReadingForm from "@/components/VitalReadingForm";
-import { Badge } from "@/components/ui/badge";
 
-export default function VitalsManagement() {
-  const [vitals, setVitals] = useState<Vitals[]>([]);
-  const [vitalReadings, setVitalReadings] = useState<VitalReading[]>([]);
+import { Trash2 } from "lucide-react";
+import { UserType, VitalReading } from "@/lib/types";
+import { createClient } from "@/utils/supabase/client";
+import React, { useEffect, useState } from "react";
 
-  const fetchVitals = async () => {
-    const supabase = createClient();
-    const { data, error } = await supabase.from("Vitals").select("*");
+const groupReadingsByPatientAndTimestamp = (readings: VitalReading[]) => {
+  const grouped = readings.reduce((acc: any, reading: VitalReading) => {
+    const key = `${reading.patientId}-${reading.timestamp}`;
+    if (!acc[key]) {
+      acc[key] = {
+        patient: reading.Patient.User,
+        timestamp: reading.timestamp,
+        recordedBy: reading.RecordedBy,
+        vitals: {},
+        patientId: reading.patientId,
+      };
+    }
+    acc[key].vitals[reading.Vitals.name] = reading.value;
+    return acc;
+  }, {});
+  return Object.values(grouped);
+};
 
-    if (!error) setVitals(data);
-  };
+const VitalsReadingPage = () => {
+  const [readings, setReadings] = useState<any[]>([]);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  const supabase = createClient();
 
   const fetchVitalReadings = async () => {
-    const supabase = createClient();
-    const { data, error } = await supabase.from("VitalReading").select(`
-        *, 
-        Vitals(*),
-        Patient(*, 
-          User(*)),
-        RecordedBy: User!VitalsReading_recordedBy_fkey(*),
-        LastEditedBy: User!VitalReading_lastEditedBy_fkey(*)
-      `);
-
-    console.log(data, error);
-
-    if (!error) setVitalReadings(data);
-  };
-
-  const handleVitalsDelete = async (vital: Vitals) => {
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from("Vitals")
-      .delete()
-      .eq("id", vital.id);
-
-    await fetchVitals();
-  };
-
-  const handleVitalReadingsDelete = async (vitalReading: VitalReading) => {
-    const supabase = createClient();
     const { data, error } = await supabase
       .from("VitalReading")
-      .delete()
-      .eq("id", vitalReading.id);
+      .select(
+        `id,
+        patientId,
+        value,
+        timestamp,
+        Vitals(name),
+        Patient(*, User(*)),
+        RecordedBy: User!VitalsReading_recordedBy_fkey(*)`
+      );
 
-    await fetchVitalReadings();
-  };
-
-  const handleOpenChange = async (open: boolean) => {
-    if (!open) {
-      fetchVitals();
-      fetchVitalReadings();
+    if (!error) {
+      const groupedReadings = groupReadingsByPatientAndTimestamp(data || []);
+      setReadings(groupedReadings);
+    } else {
+      console.error("Error fetching vital readings:", error);
     }
   };
 
+  const handleDeleteGroup = async (patientId: number, timestamp: string) => {
+    try {
+      const { error } = await supabase
+        .from("VitalReading")
+        .delete()
+        .match({ patientId, timestamp });
+
+      if (error) {
+        console.error("Error deleting vital readings:", error);
+      } else {
+        await fetchVitalReadings(); // Refresh table after deletion
+      }
+    } catch (error) {
+      console.error("Unexpected error while deleting:", error);
+    }
+  };
+
+  const handleAddSuccess = async () => {
+    await fetchVitalReadings(); // Refresh the table data first
+    setIsAddModalOpen(false); // Close modal only after successful data refresh
+  };
+
   useEffect(() => {
-    fetchVitals();
     fetchVitalReadings();
+
+    const subscription = supabase
+      .channel("vital_readings_changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "VitalReading" },
+        (payload) => {
+          console.log("Realtime update received:", payload);
+          fetchVitalReadings(); // Refresh data on realtime changes
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
   }, []);
 
+  if (!readings) return <div>Loading...</div>;
+
   return (
-    <div className="w-full max-w-4xl mx-auto p-4 space-y-8">
-      <div>
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold">Vital Readings</h2>
-          <Dialog onOpenChange={(open) => handleOpenChange(open)}>
-            <DialogTrigger asChild>
-              <Button>Add Vital Reading</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Input Vital Reading Details</DialogTitle>
-              </DialogHeader>
-              <VitalReadingForm userType={UserType.ADMIN}/>
-            </DialogContent>
-          </Dialog>
-        </div>
-        <div className="border rounded-md">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Vital</TableHead>
-                <TableHead>Patient</TableHead>
-                <TableHead>Value</TableHead>
-                <TableHead>Timestamp</TableHead>
-                <TableHead>Recorded By</TableHead>
-                <TableHead>Last Edited By</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {vitalReadings.map((reading: VitalReading) => (
-                <TableRow key={reading.id}>
-                  <TableCell>{reading.id}</TableCell>
-                  <TableCell>{reading.Vitals.name}</TableCell>
-                  <TableCell>
-                    {reading.Patient.User.firstName}{" "}
-                    {reading.Patient.User.middleName}{" "}
-                    {reading.Patient.User.lastName}
-                  </TableCell>
-                  <TableCell>{reading.value}</TableCell>
-                  <TableCell>
-                    {new Date(reading.timestamp).toLocaleString(undefined, {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      hour12: true,
-                    })}
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      {reading.RecordedBy.firstName}{" "}
-                      {reading.RecordedBy.middleName}{" "}
-                      {reading.RecordedBy.lastName}
-                    </div>
-                    <Badge>{reading.RecordedBy.userType}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      {reading.LastEditedBy.firstName}{" "}
-                      {reading.LastEditedBy.middleName}{" "}
-                      {reading.LastEditedBy.lastName}
-                    </div>
-                    <Badge>{reading.LastEditedBy.userType}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Dialog onOpenChange={(open) => handleOpenChange(open)}>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="icon">
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Input Vital Details</DialogTitle>
-                          </DialogHeader>
-                          <VitalReadingForm userType={UserType.ADMIN}/>
-                        </DialogContent>
-                      </Dialog>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleVitalReadingsDelete(reading)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+    <div>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-3xl font-semibold">Vital Readings</h2>
+        <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+          <DialogTrigger asChild>
+            <Button onClick={() => setIsAddModalOpen(true)}>Add Vital Reading</Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[1100px] w-[1100px]">
+            <VitalReadingForm userType={UserType.DOCTOR} onSubmitSuccess={handleAddSuccess} />
+          </DialogContent>
+        </Dialog>
       </div>
+      <Table>
+        <TableCaption>A list of your recent vital readings.</TableCaption>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Recorded For (Patient)</TableHead>
+            <TableHead>Recorded By</TableHead>
+            <TableHead>Created At</TableHead>
+            <TableHead>Heart Rate</TableHead>
+            <TableHead>Systolic BP</TableHead>
+            <TableHead>Diastolic BP</TableHead>
+            <TableHead>SPO2</TableHead>
+            <TableHead>Temperature</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {readings.map((reading, index) => (
+            <React.Fragment key={index}>
+              <TableRow className="border-t-2 border-gray-300">
+                <TableCell>
+                  {reading.patient.firstName} {reading.patient.middleName || ""}{" "}
+                  {reading.patient.lastName}
+                </TableCell>
+                <TableCell>
+                  {reading.recordedBy.firstName} {reading.recordedBy.middleName || ""}{" "}
+                  {reading.recordedBy.lastName}
+                  <Badge>{reading.recordedBy.userType}</Badge>
+                </TableCell>
+                <TableCell>
+                  {new Date(reading.timestamp).toLocaleString(undefined, {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true,
+                  })}
+                </TableCell>
+                <TableCell>{reading.vitals["Heart Rate"] || "N/A"}</TableCell>
+                <TableCell>{reading.vitals["Blood Pressure (Systolic)"] || "N/A"}</TableCell>
+                <TableCell>{reading.vitals["Blood Pressure (Diastolic)"] || "N/A"}</TableCell>
+                <TableCell>{reading.vitals["SP02 (Blood Oxygen Saturation)"] || "N/A"}</TableCell>
+                <TableCell>{reading.vitals["Body Temperature"] || "N/A"}</TableCell>
+                <TableCell className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleDeleteGroup(reading.patientId, reading.timestamp)}
+                    className="p-2 border-gray-300 hover:bg-gray-100 text-red-500"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            </React.Fragment>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
-}
+};
+
+export default VitalsReadingPage;
