@@ -153,12 +153,12 @@ export default function TaskCard({
             <p className="text-sm opacity-70">
               Doctor:{" "}
               {task.AppointmentTask[0]?.Doctor?.User
-                ? `${task.AppointmentTask[0].Doctor.User.firstName} ${task.AppointmentTask[0].Doctor.User.middleName ?? ""} ${task.AppointmentTask[0].Doctor.User.lastName}`
+                ? `${task.AppointmentTask[0]?.Doctor.User.firstName} ${task.AppointmentTask[0]?.Doctor.User.middleName ?? ""} ${task.AppointmentTask[0]?.Doctor.User.lastName}`
                 : "N/A"}
             </p>
             <p className="text-sm opacity-70">
               Date:{" "}
-              {new Date(task.AppointmentTask[0].appointmentDate).toLocaleString(
+              {new Date(task.AppointmentTask[0]?.appointmentDate).toLocaleString(
                 undefined,
                 {
                   year: "numeric",
@@ -171,16 +171,16 @@ export default function TaskCard({
               )}
             </p>
             <p className="text-sm opacity-70">
-              Purpose: {task.AppointmentTask[0].purpose}
+              Purpose: {task.AppointmentTask[0]?.purpose}
             </p>
-            {task.AppointmentTask[0].doctorsNotes && (
+            {task.AppointmentTask[0]?.doctorsNotes && (
               <div className="text-sm opacity-70">
                 <p>Notes:</p>
                 <div
                   className="max-h-32 overflow-y-auto p-2 rounded-md"
                   style={{ whiteSpace: "pre-wrap", wordWrap: "break-word" }}
                 >
-                  {task.AppointmentTask[0].doctorsNotes}
+                  {task.AppointmentTask[0]?.doctorsNotes}
                 </div>
               </div>
             )}
@@ -194,15 +194,15 @@ export default function TaskCard({
               Exercise Details:
             </p>
             <p className="text-sm opacity-70">
-              Name: {task.ExerciseTask[0].name}
+              Name: {task.ExerciseTask[0]?.name}
             </p>
             <p className="text-sm opacity-70">
-              Sets: {task.ExerciseTask[0].sets}, Reps:{" "}
-              {task.ExerciseTask[0].reps}
+              Sets: {task.ExerciseTask[0]?.sets}, Reps:{" "}
+              {task.ExerciseTask[0]?.reps}
             </p>
             <p className="text-sm opacity-70">
-              Duration: {task.ExerciseTask[0].durationPerSet}m/set,{" "}
-              {task.ExerciseTask[0].durationPerRep}m/rep
+              Duration: {task.ExerciseTask[0]?.durationPerSet}m/set,{" "}
+              {task.ExerciseTask[0]?.durationPerRep}m/rep
             </p>
           </div>
         );
@@ -214,20 +214,20 @@ export default function TaskCard({
               Medication Details:
             </p>
             <p className="text-sm opacity-70">
-              Name: {task.MedicationTask[0].name}
+              Name: {task.MedicationTask[0]?.name}
             </p>
             <div className="text-sm opacity-70">
               <span>Color: </span>
-              <Badge style={getColor(task.MedicationTask[0].medicineColor)}>
-                {task.MedicationTask[0].medicineColor}
+              <Badge style={getColor(task.MedicationTask[0]?.medicineColor)}>
+                {task.MedicationTask[0]?.medicineColor}
               </Badge>
             </div>
             <p className="text-sm opacity-70">
-              Dosage: {task.MedicationTask[0].dosage} mg
+              Dosage: {task.MedicationTask[0]?.dosage} mg
             </p>
             <p className="text-sm opacity-70">
               Period:{" "}
-              {new Date(task.MedicationTask[0].startDate).toLocaleString(
+              {new Date(task.MedicationTask[0]?.startDate).toLocaleString(
                 undefined,
                 {
                   year: "numeric",
@@ -239,7 +239,7 @@ export default function TaskCard({
                 }
               )}{" "}
               -{" "}
-              {new Date(task.MedicationTask[0].endDate).toLocaleString(
+              {new Date(task.MedicationTask[0]?.endDate).toLocaleString(
                 undefined,
                 {
                   year: "numeric",
@@ -253,7 +253,7 @@ export default function TaskCard({
             </p>
             <div className="space-y-2">
               <h1 className="text-md font-semibold">Medication Schedules:</h1>
-              {task.MedicationTask[0].MedicationTaskSchedule.map(
+              {task.MedicationTask[0]?.MedicationTaskSchedule.map(
                 (sched: MedicationTaskSchedule) => (
                   <div key={sched.id} className="flex items-center space-x-2">
                     <Checkbox
@@ -285,9 +285,9 @@ export default function TaskCard({
                 )
               )}
             </div>
-            {task.MedicationTask[0].instructions && (
+            {task.MedicationTask[0]?.instructions && (
               <p className="text-sm opacity-70">
-                Instructions: {task.MedicationTask[0].instructions}
+                Instructions: {task.MedicationTask[0]?.instructions}
               </p>
             )}
           </div>
@@ -300,11 +300,11 @@ export default function TaskCard({
               Treatment Details:
             </p>
             <p className="text-sm opacity-70">
-              Type: {task.TreatmentTask[0].treatmentType}
+              Type: {task.TreatmentTask[0]?.treatmentType}
             </p>
             <p className="text-sm opacity-70">
               Date:{" "}
-              {new Date(task.TreatmentTask[0].date).toLocaleString(undefined, {
+              {new Date(task.TreatmentTask[0]?.date).toLocaleString(undefined, {
                 year: "numeric",
                 month: "long",
                 day: "numeric",
@@ -313,9 +313,9 @@ export default function TaskCard({
                 hour12: true,
               })}
             </p>
-            {task.TreatmentTask[0].dosage && (
+            {task.TreatmentTask[0]?.dosage && (
               <p className="text-sm opacity-70">
-                Dosage: {task.TreatmentTask[0].dosage} Units
+                Dosage: {task.TreatmentTask[0]?.dosage} Units
               </p>
             )}
           </div>
@@ -590,7 +590,7 @@ export default function TaskCard({
                     )}
                     {task.type === TaskType.TREATMENT && (
                       <TreatmentTaskForm
-                        treatmentTask={{ ...task, ...task.TreatmentTask[0] }}
+                        treatmentTask={{ ...task, ...task.TreatmentTask[0]}}
                       />
                     )}
                   </DialogContent>
