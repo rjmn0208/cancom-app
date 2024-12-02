@@ -20,8 +20,8 @@ import {
 } from "@/components/ui/table";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
-import { Pencil, Trash2 } from "lucide-react";
-import InstitutionForm from "@/components/InstitutionForm";
+import { Trash2, Pencil } from "lucide-react";
+import AddInstitutionForm from "@/components/AddInstitutionForm";
 
 export interface Address {
   id: number;
@@ -44,8 +44,7 @@ export interface MedicalInstitution {
 
 const MedicalInstitutionsPage = () => {
   const [institutions, setInstitutions] = useState<MedicalInstitution[]>([]);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedInstitution, setSelectedInstitution] = useState<MedicalInstitution | null>(null);
 
   const fetchInstitutions = async () => {
@@ -62,13 +61,15 @@ const MedicalInstitutionsPage = () => {
     setInstitutions(data || []);
   };
 
-  const handleAddOrUpdate = async (formData: any) => {
+  const handleAddOrUpdateInstitution = async (formData: Record<string, FormDataEntryValue>) => {
     const supabase = createClient();
-    let addressId = null;
 
     try {
+      let addressId = null;
+
       if (selectedInstitution?.addressId) {
-        const { error } = await supabase
+        // Update address
+        const { error: addressError } = await supabase
           .from("Address")
           .update({
             addressLineOne: formData.addressLineOne,
@@ -81,10 +82,12 @@ const MedicalInstitutionsPage = () => {
           })
           .eq("id", selectedInstitution.addressId);
 
-        if (error) throw new Error("Failed to update address");
+        if (addressError) throw new Error("Failed to update address");
+
         addressId = selectedInstitution.addressId;
       } else {
-        const { data, error } = await supabase
+        // Create new address
+        const { data: addressData, error: addressError } = await supabase
           .from("Address")
           .insert({
             addressLineOne: formData.addressLineOne,
@@ -98,104 +101,108 @@ const MedicalInstitutionsPage = () => {
           .select("id")
           .single();
 
-        if (error) throw new Error("Failed to create address");
-        addressId = data.id;
+        if (addressError) throw new Error("Failed to create address");
+
+        addressId = addressData.id;
       }
 
-      if (addressId) {
-        if (selectedInstitution) {
-          const { error } = await supabase
-            .from("MedicalInstitution")
-            .update({
-              name: formData.name,
-              phone: formData.phone,
-              addressId: addressId,
-            })
-            .eq("id", selectedInstitution.id);
+      if (selectedInstitution) {
+        // Update institution
+        const { error: institutionError } = await supabase
+          .from("MedicalInstitution")
+          .update({
+            name: formData.name,
+            phone: formData.phone,
+            addressId,
+          })
+          .eq("id", selectedInstitution.id);
 
-          if (error) throw new Error("Failed to update medical institution");
+        if (institutionError) throw new Error("Failed to update institution");
 
-          setInstitutions((prev) =>
-            prev.map((inst) =>
-              inst.id === selectedInstitution.id
-                ? { ...inst, name: formData.name, phone: formData.phone, addressId }
-                : inst
-            )
-          );
+        setInstitutions((prev) =>
+          prev.map((inst) =>
+            inst.id === selectedInstitution.id
+              ? { ...inst, name: formData.name, phone: formData.phone, addressId }
+              : inst
+          )
+        );
 
-          toast.success("Medical institution updated successfully");
-        } else {
-          const { data, error } = await supabase
-            .from("MedicalInstitution")
-            .insert({
-              name: formData.name,
-              phone: formData.phone,
-              addressId: addressId,
-            })
-            .select("*, address:Address(*)");
+        toast.success("Medical institution updated successfully");
+      } else {
+        // Add new institution
+        const { data: institutionData, error: institutionError } = await supabase
+          .from("MedicalInstitution")
+          .insert({
+            name: formData.name,
+            phone: formData.phone,
+            addressId,
+          })
+          .select("*, address:Address(*)");
 
-          if (error) throw new Error("Failed to add medical institution");
+        if (institutionError) throw new Error("Failed to add medical institution");
 
-          setInstitutions((prev) => [...prev, ...data]);
-          toast.success("Medical institution added successfully");
-        }
+        setInstitutions((prev) => [...prev, ...institutionData]);
+        toast.success("Medical institution added successfully");
       }
     } catch (error: any) {
       toast.error(error.message || "An unexpected error occurred");
     }
 
-    closeModals();
+    closeModal();
   };
 
-  const handleDelete = async (institutionId: number) => {
+  const handleDeleteInstitution = async (id: number) => {
     const supabase = createClient();
+
     try {
-      const { error } = await supabase
-        .from("MedicalInstitution")
-        .delete()
-        .eq("id", institutionId);
+      const { error } = await supabase.from("MedicalInstitution").delete().eq("id", id);
 
-      if (error) throw new Error("Failed to delete medical institution");
+      if (error) throw new Error("Failed to delete institution");
 
-      setInstitutions((prev) => prev.filter((inst) => inst.id !== institutionId));
+      setInstitutions((prev) => prev.filter((inst) => inst.id !== id));
       toast.success("Medical institution deleted successfully");
     } catch (error: any) {
       toast.error(error.message || "An unexpected error occurred");
     }
   };
 
-  const openEditModal = (institution: MedicalInstitution) => {
-    setSelectedInstitution(institution);
-    setIsEditModalOpen(true);
+  const openAddModal = () => {
+    setSelectedInstitution(null); // Clear selected institution for adding
+    setIsModalOpen(true);
   };
 
-  const closeModals = () => {
-    setIsAddModalOpen(false);
-    setIsEditModalOpen(false);
-    setSelectedInstitution(null);
+  const openEditModal = (institution: MedicalInstitution) => {
+    setSelectedInstitution(institution); // Set the selected institution for editing
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedInstitution(null); // Clear selected institution when modal closes
   };
 
   useEffect(() => {
     fetchInstitutions();
   }, []);
 
-  if (!institutions) return <div>Loading...</div>;
-
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-3xl font-semibold">Medical Institutions</h2>
-        <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => setIsAddModalOpen(true)}>Add Institution</Button>
+            <Button onClick={openAddModal}>Add Institution</Button>
           </DialogTrigger>
           <DialogContent className="max-w-3xl">
             <DialogHeader>
-              <DialogTitle>Add Medical Institution</DialogTitle>
+              <DialogTitle>
+                {selectedInstitution ? "Edit Medical Institution" : "Add Medical Institution"}
+              </DialogTitle>
             </DialogHeader>
-            <InstitutionForm
-              onSubmit={(data) => handleAddOrUpdate(data)}
-              onClose={closeModals}
+            <AddInstitutionForm
+              onSubmit={handleAddOrUpdateInstitution}
+              onClose={closeModal}
+              selectedInstitution={selectedInstitution}
             />
           </DialogContent>
         </Dialog>
@@ -220,22 +227,19 @@ const MedicalInstitutionsPage = () => {
               <TableCell>{institution.address?.city || "No Address"}</TableCell>
               <TableCell>
                 <div className="flex space-x-2">
-                  {/* Edit Icon Button */}
                   <button
-                    className="border border-gray-300 rounded p-2 hover:bg-gray-100"
                     onClick={() => openEditModal(institution)}
+                    className="p-2 border rounded hover:bg-gray-100"
                     aria-label="Edit"
                   >
-                    <Pencil className="w-5 h-5 text-gray-600" />
+                    <Pencil className="w-5 h-5 text-black-600" />
                   </button>
-
-                  {/* Delete Icon Button */}
                   <button
-                    className="border border-gray-300 rounded p-2 hover:bg-gray-100"
-                    onClick={() => handleDelete(institution.id)}
+                    onClick={() => handleDeleteInstitution(institution.id)}
+                    className="p-2 border rounded hover:bg-gray-100"
                     aria-label="Delete"
                   >
-                    <Trash2 className="w-5 h-5 text-gray-600" />
+                    <Trash2 className="w-5 h-5 text-red-600" />
                   </button>
                 </div>
               </TableCell>
