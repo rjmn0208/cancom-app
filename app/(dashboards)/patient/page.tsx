@@ -1,44 +1,62 @@
-import Link from "next/link";
-import React from "react";
+import Image from "next/image";
 
-const Page = () => {
+async function AdminDashboard() {
   return (
-    <div>
-      <Link href="" className="block text-lg font-semibold">
-        Dashboard
-      </Link>
-      <Link
-        href="/patient"
-        className="block text-muted-foreground hover:text-foreground transition-colors"
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100%",
+        width: "100%",
+        fontFamily: "'Inter', sans-serif",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          padding: "2rem 3rem",
+          maxWidth: "450px",
+          textAlign: "center",
+        }}
       >
-        Home
-      </Link>
-      <Link
-        href="/patient/profile"
-        className="block text-muted-foreground hover:text-foreground transition-colors"
-      >
-        Profile
-      </Link>
-      <Link
-        href="/patient/task-list"
-        className="block text-muted-foreground hover:text-foreground transition-colors"
-      >
-        Manage Tasks
-      </Link>
-      <Link
-        href="/patient/vitalreadings"
-        className="block text-muted-foreground hover:text-foreground transition-colors"
-      >
-        Vitals Log
-      </Link>
-      <Link
-        href="/patient/journal-entries"
-        className="block text-muted-foreground hover:text-foreground transition-colors"
-      >
-        Journal Entries
-      </Link>
+        <h1
+          style={{
+            margin: "0.5rem 0",
+            fontSize: "2rem",
+            color: "#6153d7",
+            fontWeight: "bold",
+          }}
+        >
+          Welcome to Cancer Companion
+        </h1>
+        <Image
+          src="/images/Mascot.png"
+          alt="Admin Mascot"
+          width={230}
+          height={230}
+          priority
+          style={{
+            borderRadius: "50%",
+            marginBottom: "1rem",
+          }}
+        />
+        <p
+          style={{
+            marginTop: "0.5rem",
+            fontSize: "1.1rem",
+            color: "#555",
+            lineHeight: "1.5",
+          }}
+        >
+          Navigate using the menu to manage your
+          system efficiently.
+        </p>
+      </div>
     </div>
   );
-};
+}
 
-export default Page;
+export default AdminDashboard;

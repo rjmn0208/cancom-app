@@ -16,6 +16,12 @@ export default function DashboardLayout({
             Dashboard
           </h1>
           <Link
+            href="/admin"
+            className="block text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Home
+          </Link>
+          <Link
             href="/medical-staff/profile"
             className="block text-muted-foreground hover:text-foreground transition-colors"
           >

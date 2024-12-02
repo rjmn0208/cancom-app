@@ -1,48 +1,61 @@
-import Link from "next/link";
+import Image from "next/image";
 
 async function AdminDashboard() {
   return (
-    <>
-      <Link href="" className="block text-lg font-semibold">
-        Dashboard
-      </Link>
-      <Link
-        href="/admin"
-        className="block text-muted-foreground hover:text-foreground transition-colors"
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100%",
+        width: "100%",
+        fontFamily: "'Inter', sans-serif",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          padding: "2rem 3rem",
+          maxWidth: "450px",
+          textAlign: "center",
+        }}
       >
-        Home
-      </Link>
-      <Link
-        href="/admin/account-management"
-        className="block text-muted-foreground hover:text-foreground transition-colors"
-      >
-        Account Management
-      </Link>
-      <Link
-        href="/admin/users"
-        className="block text-muted-foreground hover:text-foreground transition-colors"
-      >
-        User Management
-      </Link>
-      <Link
-        href="/admin/vitalreadings"
-        className="block text-muted-foreground hover:text-foreground transition-colors"
-      >
-        Vitals and Vital Readings
-      </Link>
-      <Link
-        href="/admin/tasklist-management"
-        className="block text-muted-foreground hover:text-foreground transition-colors"
-      >
-        Manage TaskLists
-      </Link>
-      <Link
-        href="/admin/medical-institutions"
-        className="block text-muted-foreground hover:text-foreground transition-colors"
-      >
-        Manage Medical Institutions
-      </Link>
-    </>
+        <h1
+          style={{
+            margin: "0.5rem 0",
+            fontSize: "2rem",
+            color: "#6153d7",
+            fontWeight: "bold",
+          }}
+        >
+          Welcome to Cancer Companion
+        </h1>
+        <Image
+          src="/images/Mascot.png"
+          alt="Admin Mascot"
+          width={230}
+          height={230}
+          priority
+          style={{
+            borderRadius: "50%",
+            marginBottom: "1rem",
+          }}
+        />
+        <p
+          style={{
+            marginTop: "0.5rem",
+            fontSize: "1.1rem",
+            color: "#555",
+            lineHeight: "1.5",
+          }}
+        >
+          Navigate using the menu to manage your
+          system efficiently.
+        </p>
+      </div>
+    </div>
   );
 }
 
