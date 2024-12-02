@@ -64,12 +64,12 @@ interface VitalReadingFormProps {
   userType: UserType,
 }
 
-const VitalReadingForm: React.FC<VitalReadingFormProps> = ({userType}) => {
+const VitalReadingForm: React.FC<VitalReadingFormProps> = ({ userType, onSubmitSuccess }) => {
   const [users, setUsers] = useState<User[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [vitals, setVitals] = useState<Vitals[]>([]);
-  const [defaultRecordedBy, setDefaultRecordedBy] = useState<any>()
-  const [defaultPatientId, setDefaultPatientId] = useState<any>()
+  const [defaultRecordedBy, setDefaultRecordedBy] = useState<any>();
+  const [defaultPatientId, setDefaultPatientId] = useState<any>();
 
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
@@ -109,7 +109,6 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({userType}) => {
       timestamp: new Date(),
     },
   });
-
 
   const fetchUsers = async () => {
     const supabase = createClient();
@@ -157,7 +156,7 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({userType}) => {
 
   const onSubmit = async (values: FormSchemaType) => {
     const supabase = createClient();
-    console.log('onsubmitvalues', values)
+    console.log("onsubmitvalues", values);
     const vitalReadings = values.vitalsData.map((vital) => {
       const vitalRecord = vitals.find((v) => v.name === vital.name);
       if (!vitalRecord) {
@@ -174,9 +173,7 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({userType}) => {
       };
     });
 
-    const { error } = await supabase
-      .from("VitalReading")
-      .insert(vitalReadings);
+    const { error } = await supabase.from("VitalReading").insert(vitalReadings);
 
     if (error) {
       toast.error("Failed to record vital readings");
@@ -185,21 +182,21 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({userType}) => {
     }
 
     toast.success("Vital readings recorded successfully");
+    if (onSubmitSuccess) onSubmitSuccess(); // Trigger parent callback
   };
 
   useEffect(() => {
-    fetchUsers(),
-    fetchPatients(),
-    fetchVitals(),
-    fetchDefaultPatientId(),
-    fetchDefaultRecordedBy()
+    fetchUsers();
+    fetchPatients();
+    fetchVitals();
+    fetchDefaultPatientId();
+    fetchDefaultRecordedBy();
   }, []);
 
-
   return (
-    <Card className="w-full max-w-4xl mx-auto">
+    <Card className="w-full border-none">
       <CardHeader>
-        <CardTitle>Input Vital Reading Details</CardTitle>
+        <CardTitle className="text-3xl">Input Vital Reading Details</CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -323,12 +320,12 @@ const VitalReadingForm: React.FC<VitalReadingFormProps> = ({userType}) => {
                         render={({ field }) => (
                           <FormItem>
                             <FormControl>
-                            <Input
-                              type="number"
-                              {...field}
-                              value={field.value ? Number(field.value) : 0}
-                              onChange={(e) => field.onChange(Number(e.target.value))}
-                            />
+                              <Input
+                                type="number"
+                                {...field}
+                                value={field.value ? Number(field.value) : 0}
+                                onChange={(e) => field.onChange(Number(e.target.value))}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
