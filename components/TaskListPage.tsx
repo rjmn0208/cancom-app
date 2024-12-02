@@ -15,7 +15,6 @@ import {
   ListPermission,
   MedicationTaskSchedule,
   Task,
-  TaskComment,
   TaskList,
   TaskTag,
   TaskType,
@@ -69,69 +68,49 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
     const { data, error } = await supabase
       .from("Task")
       .select(
-        "*, Comment(*, Author: User(*)), TaskTag(*), TaskCreator: User(*), ExerciseTask(*), MedicationTask(*,MedicationTaskSchedule(*)), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))"
+        "*, TaskTag(*), TaskCreator: User(*),ExerciseTask(*), MedicationTask(*,MedicationTaskSchedule(*)), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))"
       )
       .eq("taskListId", taskListId)
       .eq("isDone", false)
-      .eq("isArchived", false);
-  
-    if (error) {
-      console.error("Error fetching tasks:", error.message);
-    } else {
-      console.log("Fetched tasks:", data);
-    }
-  
+      .eq('isArchived', false)
+
     if (!error && data) setTasks(data);
   };
-  
+
   const fetchCompletedTasks = async () => {
     const supabase = createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
-  
+
     const { data, error } = await supabase
       .from("Task")
       .select(
-        "*, Comment(*, Author: User(*)), TaskTag(*), TaskCreator: User(*), ExerciseTask(*), MedicationTask(*, MedicationTaskSchedule(*)), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))"
+        "*, TaskTag(*), TaskCreator: User(*), ExerciseTask(*), MedicationTask(*,MedicationTaskSchedule(*)), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))"
       )
       .eq("taskListId", taskListId)
       .eq("isDone", true)
-      .eq("isArchived", false) // Completed tasks are not archived
-      .eq("taskCreator", user?.id); // Ensure only tasks created by the user
-  
-    if (error) {
-      console.error("Error fetching completed tasks:", error.message);
-    } else {
-      console.log("Fetched completed tasks:", data);
-      setCompletedTasks(data || []);
-    }
+      .or(`isArchived.eq.false,taskCreator.eq.${user?.id}`);  
+      if (!error && data) setCompletedTasks(data);
   };
-  
 
   const fetchArchivedTasks = async () => {
     const supabase = createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
-  
+
     const { data, error } = await supabase
       .from("Task")
       .select(
-        "*, Comment(*, Author: User(*)), TaskTag(*), TaskCreator: User(*), ExerciseTask(*), MedicationTask(*, MedicationTaskSchedule(*)), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))"
+        "*, TaskTag(*), TaskCreator: User(*), ExerciseTask (*), MedicationTask(*,MedicationTaskSchedule(*)), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))"
       )
       .eq("taskListId", taskListId)
       .eq("isArchived", true)
-      .eq("taskCreator", user?.id); // Ensure tasks belong to the user
-  
-    if (error) {
-      console.error("Error fetching archived tasks:", error.message);
-    } else {
-      console.log("Fetched archived tasks:", data);
-      setArchivedTasks(data || []);
-    }
+      .eq("isDone", false)
+      .eq("taskCreator", user?.id);
+      if (!error && data) setArchivedTasks(data);
   };
-  
 
   const handleTaskTagDelete = async (tag: TaskTag) => {
     const supabase = createClient();
@@ -148,20 +127,6 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
     }
   };
 
-  const handleCommentDelete = async (comment: TaskComment) => {
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from("Comment")
-      .delete()
-      .eq("id", comment.id);
-
-    if (!error) {
-      toast.success("Comment deleted successfully");
-      fetchTasks();
-      fetchCompletedTasks();
-      fetchArchivedTasks();
-    }
-  };
   const handleDelete = async (task: Task) => {
     const supabase = createClient();
     const { error } = await supabase.from("Task").delete().eq("id", task.id);
@@ -170,7 +135,6 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
       toast.success("Task deleted successfully");
       fetchTasks();
       fetchCompletedTasks();
-      fetchArchivedTasks()
     }
   };
 
@@ -259,7 +223,6 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
       toast.success("Task undoed");
       fetchTasks();
       fetchCompletedTasks();
-      fetchArchivedTasks()
     }
   };
 
@@ -367,6 +330,8 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
         return <Pill className="h-4 w-4" />;
       case "APPOINTMENT":
         return <Stethoscope className="h-4 w-4" />;
+      case "JOURNAL":
+        return <BookOpen className="h-4 w-4" />;
       case "TREATMENT":
         return <Cross className="h-4 w-4" />;
       default:
@@ -424,7 +389,6 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
                   {addTaskType === TaskType.EXERCISE && (
                     <ExerciseTaskForm taskListId={taskListId} />
                   )}
-                 
                 </div>
               </DialogContent>
             </Dialog>
@@ -447,12 +411,10 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
                   onUndoComplete={handleUndoComplete}
                   onOpenChange={handleOpenChange}
                   onTagDelete={handleTaskTagDelete}
-                  onCommentDelete={handleCommentDelete}
                   isCompleted={true}
                   onMedScheduleMarkTaken={handleMedTaskScheduleMarkTaken}
                   onMedScheduleDelete={handleMedTaskScheduleTakenDelete}
                   onMedScheduleUndoTaken={handleMedTaskScheduleUndoTaken}
-                  permission={listPermission}
                 />
               ))}
             </SheetContent>
@@ -466,7 +428,7 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
               <SheetHeader>
                 <SheetTitle>List of Archived Tasks</SheetTitle>
               </SheetHeader>
-              {archivedTasks.map((archTask) => (
+                            {archivedTasks.map((archTask) => (
                 <TaskCard
                   key={archTask.id}
                   task={archTask}
@@ -550,11 +512,9 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
                     onComplete={handleComplete}
                     onOpenChange={handleOpenChange}
                     onTagDelete={handleTaskTagDelete}
-                    onCommentDelete={handleCommentDelete}
                     onMedScheduleMarkTaken={handleMedTaskScheduleMarkTaken}
                     onMedScheduleDelete={handleMedTaskScheduleTakenDelete}
                     onMedScheduleUndoTaken={handleMedTaskScheduleUndoTaken}
-                    permission={listPermission}
                   />
                 ))}
             </div>
