@@ -9,6 +9,7 @@ import {
   TaskTag,
   MedicationTaskSchedule,
   ListPermission,
+  TaskComment,
 } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,6 +38,7 @@ import {
   X,
   LucideFlaskConical,
   MessageSquare,
+  MessageSquarePlus,
 } from "lucide-react";
 import {
   Dialog,
@@ -58,6 +60,8 @@ import { Checkbox } from "./ui/checkbox";
 import { Label } from "./ui/label";
 import { format } from "date-fns";
 import TaskCommentForm from "./TaskCommentForm";
+import CommentCard from "./CommentCard";
+import { ScrollArea } from "./ui/scroll-area";
 
 interface TaskCardProps {
   task: Task;
@@ -65,6 +69,7 @@ interface TaskCardProps {
   onComplete: (task: Task) => void;
   onUndoComplete?: (task: Task) => void;
   onTagDelete: (tag: TaskTag) => void;
+  onCommentDelete: (comment: TaskComment) => void;
   onOpenChange: (open: boolean) => void;
   isCompleted?: boolean;
   onMedScheduleMarkTaken: (sched: MedicationTaskSchedule) => void;
@@ -81,6 +86,7 @@ export default function TaskCard({
   onOpenChange,
   isCompleted = false,
   onTagDelete,
+  onCommentDelete,
   onMedScheduleMarkTaken,
   onMedScheduleDelete,
   onMedScheduleUndoTaken,
@@ -88,6 +94,8 @@ export default function TaskCard({
 }: TaskCardProps) {
   const [subTasks, setSubTasks] = useState<Task[]>([]);
   const [prerequisites, setPrerequisites] = useState<Task[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+
 
   const handleAction = (action: "delete" | "complete" | "undoComplete") => {
     switch (action) {
@@ -437,7 +445,7 @@ export default function TaskCard({
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Task Details</DialogTitle>
+                  <DialogTitle>Task Details for task title: <p className="italic ">{task.title}</p></DialogTitle>
                   <DialogDescription>
                     View prerequisites and subtasks for this task.
                   </DialogDescription>
@@ -481,7 +489,7 @@ export default function TaskCard({
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Add a tag to this task</DialogTitle>
+                  <DialogTitle>Add a tag on task title: <p className="italic ">{task.title}</p></DialogTitle>
                 </DialogHeader>
                 <TaskTagForm task={task} />
               </DialogContent>
@@ -490,16 +498,57 @@ export default function TaskCard({
             <Dialog onOpenChange={onOpenChange}>
               <DialogTrigger asChild>
                 <Button variant="ghost" size="icon">
-                  <MessageSquare  className="w-4 h-4" />
+                  <MessageSquarePlus className="w-4 h-4" />
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Add a comment</DialogTitle>
+                  <DialogTitle>Add a comment on task title: <p className="italic ">{task.title}</p>
+                  </DialogTitle>
                 </DialogHeader>
                 <TaskCommentForm task={task} />
               </DialogContent>
             </Dialog>
+
+            <Dialog onOpenChange={onOpenChange}>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <MessageSquare className="w-4 h-4" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px] md:max-w-[700px] lg:max-w-[900px]">
+                <ScrollArea className="max-h-[70vh] overflow-auto">
+                  <DialogHeader>
+                    <DialogTitle>
+                      Comments on task title: <p className="italic ">{task.title}</p>
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="mt-6">
+                    {task.Comment.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        No comments yet.
+                      </p>
+                    ) : (
+                      <div className="flex flex-col gap-4 m-4">
+                        {task.Comment.slice() // Optional: Avoid mutating the original array
+                          .sort(
+                            (a, b) =>
+                              new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime() 
+                          ) // Sort by timestampz field
+                          .map((comment) => (
+                            <CommentCard
+                              key={comment.id}
+                              comment={comment}
+                              onCommentDelete={onCommentDelete}
+                            />
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+              </DialogContent>
+            </Dialog>
+
             {permission === ListPermission.MANAGER && (
               <>
                 <Dialog onOpenChange={onOpenChange}>
@@ -582,7 +631,6 @@ export default function TaskCard({
                   </Button>
                 </div>
               ))}
-              
             </div>
           </div>
         )}

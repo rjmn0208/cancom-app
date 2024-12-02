@@ -15,6 +15,7 @@ import {
   ListPermission,
   MedicationTaskSchedule,
   Task,
+  TaskComment,
   TaskList,
   TaskTag,
   TaskType,
@@ -68,15 +69,21 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
     const { data, error } = await supabase
       .from("Task")
       .select(
-        "*, TaskTag(*), TaskCreator: User(*),ExerciseTask(*), MedicationTask(*,MedicationTaskSchedule(*)), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))"
+        "*, Comment(*, Author: User(*)), TaskTag(*), TaskCreator: User(*), ExerciseTask(*), MedicationTask(*,MedicationTaskSchedule(*)), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))"
       )
       .eq("taskListId", taskListId)
       .eq("isDone", false)
-      .eq('isArchived', false)
-
+      .eq("isArchived", false);
+  
+    if (error) {
+      console.error("Error fetching tasks:", error.message);
+    } else {
+      console.log("Fetched tasks:", data);
+    }
+  
     if (!error && data) setTasks(data);
   };
-
+  
   const fetchCompletedTasks = async () => {
     const supabase = createClient();
     const {
@@ -86,7 +93,7 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
     const { data, error } = await supabase
       .from("Task")
       .select(
-        "*, TaskTag(*), TaskCreator: User(*), ExerciseTask(*), MedicationTask(*,MedicationTaskSchedule(*)), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))"
+        "*, Comment(*, Author: User(*)), TaskTag(*), TaskCreator: User(*), JournalEntry(*),ExerciseTask (*), MedicationTask(*,MedicationTaskSchedule(*)), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))"
       )
       .eq("taskListId", taskListId)
       .eq("isDone", true)
@@ -104,7 +111,7 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
     const { data, error } = await supabase
       .from("Task")
       .select(
-        "*, TaskTag(*), TaskCreator: User(*), ExerciseTask (*), MedicationTask(*,MedicationTaskSchedule(*)), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))"
+        "*, Comment(*, Author: User(*)), TaskTag(*), TaskCreator: User(*), JournalEntry(*),ExerciseTask (*), MedicationTask(*,MedicationTaskSchedule(*)), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))"
       )
       .eq("taskListId", taskListId)
       .eq("isArchived", true)
@@ -129,6 +136,20 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
     }
   };
 
+  const handleCommentDelete = async (comment: TaskComment) => {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("Comment")
+      .delete()
+      .eq("id", comment.id);
+
+    if (!error) {
+      toast.success("Comment deleted successfully");
+      fetchTasks();
+      fetchCompletedTasks();
+      fetchArchivedTasks();
+    }
+  };
   const handleDelete = async (task: Task) => {
     const supabase = createClient();
     const { error } = await supabase.from("Task").delete().eq("id", task.id);
@@ -389,6 +410,7 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
                   {addTaskType === TaskType.EXERCISE && (
                     <ExerciseTaskForm taskListId={taskListId} />
                   )}
+                 
                 </div>
               </DialogContent>
             </Dialog>
@@ -411,6 +433,7 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
                   onUndoComplete={handleUndoComplete}
                   onOpenChange={handleOpenChange}
                   onTagDelete={handleTaskTagDelete}
+                  onCommentDelete={handleCommentDelete}
                   isCompleted={true}
                   onMedScheduleMarkTaken={handleMedTaskScheduleMarkTaken}
                   onMedScheduleDelete={handleMedTaskScheduleTakenDelete}
@@ -437,6 +460,7 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
                   onComplete={handleComplete}
                   onUndoComplete={handleUndoComplete}
                   onTagDelete={handleTaskTagDelete}
+                  onCommentDelete={handleCommentDelete}
                   onOpenChange={handleOpenChange}
                   onMedScheduleMarkTaken={handleMedTaskScheduleMarkTaken}
                   onMedScheduleDelete={handleMedTaskScheduleTakenDelete}
@@ -512,6 +536,7 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
                     onComplete={handleComplete}
                     onOpenChange={handleOpenChange}
                     onTagDelete={handleTaskTagDelete}
+                    onCommentDelete={handleCommentDelete}
                     onMedScheduleMarkTaken={handleMedTaskScheduleMarkTaken}
                     onMedScheduleDelete={handleMedTaskScheduleTakenDelete}
                     onMedScheduleUndoTaken={handleMedTaskScheduleUndoTaken}

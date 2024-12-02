@@ -42,7 +42,6 @@ export enum TaskType {
   EXERCISE = "EXERCISE",
   APPOINTMENT = "APPOINTMENT",
   TREATMENT = "TREATMENT",
-  JOURNAL = "JOURNAL",
 }
 
 export enum UserType {
@@ -185,6 +184,7 @@ export interface Task {
   MedicationTask: MedicationTask[];
   TreatmentTask: TreatmentTask[];
   ExerciseTask: ExerciseTask[];
+  Comment: TaskComment[]
 }
 
 export interface AppointmentTask extends Task {
@@ -300,4 +300,29 @@ export interface TaskComment{
   timestamp: Date
 
   Author: User
+}
+
+export interface JournalEntry {
+  id: number;
+  patientId: number;
+  title: string;
+  content: string;
+  mood: string;
+  dateEntered: Date
+
+
+  Patient: Patient
+  JournalTag: JournalTag[]
+  Task: Task[]
+}
+
+export interface JournalTag {
+  id: number;
+  journalId: number;
+  value: string;
+  color: string;
+  createdAt: Date;
+
+  JournalEntry: JournalEntry;
+  Task: Task;
 }

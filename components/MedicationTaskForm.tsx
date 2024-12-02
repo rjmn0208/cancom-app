@@ -54,7 +54,7 @@ const timeSchema = z.object({
 
 const formSchema = z.object({
   //base task fields
-  title: z.string(),
+  title: z.string().min(1, {message: 'Title is empty'}),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]).nullable(),
   isDone: z.boolean(),
   isArchived: z.boolean(),
@@ -62,10 +62,10 @@ const formSchema = z.object({
   parentTaskId: z.number().nullable(),
 
   //medication task fields
-  name: z.string(),
+  name: z.string().min(2, {message: 'Medicine name is empty'}),
   medicineColor: z.string(),
   dosage: z.number().positive("Dosage must be a positive number").min(0.1, { message: "Dosage must be at least 0.1 mg" }).max(1000, { message: "Dosage cannot exceed 1000 mg" }),
-  instructions: z.string(),
+  instructions: z.string().min(1, {message: 'Instructions is empty'}),
   startDate: z.date().nullable(),
   endDate: z.date().nullable(),
   times: z.array(timeSchema),
@@ -176,7 +176,10 @@ const MedicationTaskForm: React.FC<MedicationTaskFormProps> = ({
     const timeValues = [...values.times, ...medTaskTimes];
 
 
-
+    if(!values.endDate || !values.startDate){
+      toast.error('Start or end date is empty');
+      return;
+    }
     const validationDatesError = await validateDates(values);
     if (validationDatesError) {
       toast.error(validationDatesError);
