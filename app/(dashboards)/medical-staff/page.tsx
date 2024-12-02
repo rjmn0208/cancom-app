@@ -1,7 +1,10 @@
-import React from "react";
+'use client'
 
 const MedicalStaffPage = () => {
-  return <div>DoctorPage</div>;
+  return (
+<div>Page</div>
+
+  )
 };
 
 export default MedicalStaffPage;

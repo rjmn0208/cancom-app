@@ -247,6 +247,7 @@ export interface TreatmentTask extends Task {
   date: Date;
   dosage?: number;
 
+  Task: Task
   MedicalInstitution: MedicalInstitution;
 }
 

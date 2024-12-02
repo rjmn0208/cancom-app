@@ -21,17 +21,18 @@ export default function DashboardLayout({
           >
             Profile
           </Link>
-          <Link
-            href="/medical-staff/view-tasklist"
-            className="block text-muted-foreground hover:text-foreground transition-colors"
-          >
-            View Tasklists
-          </Link>
+          
           <Link
             href="/medical-staff/vitalreadings"
             className="block text-muted-foreground hover:text-foreground transition-colors"
           >
             Log vitals for patient
+          </Link>
+          <Link
+            href="/medical-staff/treatments"
+            className="block text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Manage Treatments For Patients
           </Link>
         </nav>
         <UserDetails />

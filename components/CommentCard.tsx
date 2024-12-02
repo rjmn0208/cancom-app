@@ -60,7 +60,7 @@ const CommentCard = ({ comment, onCommentDelete }: CommentCardProps) => {
         <p className="text-sm">{comment.content}</p>
       </CardContent>
       <CardFooter className="text-xs text-muted-foreground">
-        {new Date(comment.timestamp || Date.now()).toLocaleString(undefined, {
+        {new Date(comment.timestamp).toLocaleString(undefined, {
           year: 'numeric',
           month: 'long',
           day: 'numeric',

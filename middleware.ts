@@ -7,7 +7,7 @@ import { signOutAction } from "./app/auth/auth-actions";
 
 export async function middleware(request: NextRequest) {
   const { supabase, response } = await createClient(request);
-  //await signOutAction()
+  // await signOutAction()
   const {
     data: { user },
     error,

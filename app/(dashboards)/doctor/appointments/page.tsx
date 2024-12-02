@@ -122,7 +122,7 @@ const DoctorAppointments = () => {
 
     console.log(error);
 
-    if (!error) toast.success("Appointment completed");
+    if (!error) toast.success("Appointment set to pending");
     fetchAppointments();
   };
 
@@ -151,6 +151,7 @@ const DoctorAppointments = () => {
         <TableHeader>
           <TableRow>
             <TableHead>ID</TableHead>
+            
             <TableHead>Patient</TableHead>
             <TableHead>Appointment Date</TableHead>
             <TableHead>Status</TableHead>
