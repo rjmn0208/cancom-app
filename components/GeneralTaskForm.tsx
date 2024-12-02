@@ -30,7 +30,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 const formSchema = z.object({
-  title: z.string().min(1, "Title is required"),
+  title: z.string().min(1, {message: 'Title is empty'}),
   description: z.string().optional(),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]).nullable(),
   dueDate: z.date().nullable(),

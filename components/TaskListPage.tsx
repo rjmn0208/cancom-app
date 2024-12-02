@@ -15,6 +15,7 @@ import {
   ListPermission,
   MedicationTaskSchedule,
   Task,
+  TaskComment,
   TaskList,
   TaskTag,
   TaskType,
@@ -47,6 +48,7 @@ import { Separator } from "@/components/ui/separator";
 import TreatmentTaskForm from "@/components/TreatmentTaskForm";
 import ExerciseTaskForm from "@/components/ExerciseTaskForm";
 import { Input } from "@/components/ui/input";
+import { ScrollArea } from "./ui/scroll-area";
 
 interface TaskListPageProps {
   taskListId: number;
@@ -68,11 +70,17 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
     const { data, error } = await supabase
       .from("Task")
       .select(
-        "*, TaskTag(*), TaskCreator: User(*),ExerciseTask(*), MedicationTask(*,MedicationTaskSchedule(*)), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))"
+        "*, Comment(*, Author: User(*)), TaskTag(*), TaskCreator: User(*), ExerciseTask(*), MedicationTask(*,MedicationTaskSchedule(*)), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))"
       )
       .eq("taskListId", taskListId)
       .eq("isDone", false)
-      .eq('isArchived', false)
+      .eq("isArchived", false);
+
+    if (error) {
+      console.error("Error fetching tasks:", error.message);
+    } else {
+      console.log("Fetched tasks:", data);
+    }
 
     if (!error && data) setTasks(data);
   };
@@ -86,13 +94,14 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
     const { data, error } = await supabase
       .from("Task")
       .select(
-        "*, TaskTag(*), TaskCreator: User(*), ExerciseTask(*), MedicationTask(*,MedicationTaskSchedule(*)), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))"
+        "*, Comment(*, Author: User(*)), TaskTag(*), TaskCreator: User(*), ExerciseTask(*), MedicationTask(*, MedicationTaskSchedule(*)), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))"
       )
       .eq("taskListId", taskListId)
       .eq("isDone", true)
-      .or(`isArchived.eq.false,taskCreator.eq.${user?.id}`);  
+      .or(`isArchived.eq.false,taskCreator.eq.${user?.id}`);
 
-    if (!error && data) setCompletedTasks(data);
+    console.log("Completed task error", error);
+    if (!error) setCompletedTasks(data);
   };
 
   const fetchArchivedTasks = async () => {
@@ -104,14 +113,14 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
     const { data, error } = await supabase
       .from("Task")
       .select(
-        "*, TaskTag(*), TaskCreator: User(*), ExerciseTask (*), MedicationTask(*,MedicationTaskSchedule(*)), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))"
+        "*, Comment(*, Author: User(*)), TaskTag(*), TaskCreator: User(*), ExerciseTask(*), MedicationTask(*, MedicationTaskSchedule(*)), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))"
       )
       .eq("taskListId", taskListId)
       .eq("isArchived", true)
       .eq("isDone", false)
-      .eq("taskCreator", user?.id);
+      .eq("taskCreator", user?.id); // Ensure tasks belong to the user
 
-    if (!error && data) setArchivedTasks(data);
+    if (!error) setArchivedTasks(data);
   };
 
   const handleTaskTagDelete = async (tag: TaskTag) => {
@@ -129,6 +138,20 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
     }
   };
 
+  const handleCommentDelete = async (comment: TaskComment) => {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("Comment")
+      .delete()
+      .eq("id", comment.id);
+
+    if (!error) {
+      toast.success("Comment deleted successfully");
+      fetchTasks();
+      fetchCompletedTasks();
+      fetchArchivedTasks();
+    }
+  };
   const handleDelete = async (task: Task) => {
     const supabase = createClient();
     const { error } = await supabase.from("Task").delete().eq("id", task.id);
@@ -137,6 +160,7 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
       toast.success("Task deleted successfully");
       fetchTasks();
       fetchCompletedTasks();
+      fetchArchivedTasks();
     }
   };
 
@@ -225,6 +249,7 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
       toast.success("Task undoed");
       fetchTasks();
       fetchCompletedTasks();
+      fetchArchivedTasks();
     }
   };
 
@@ -332,8 +357,6 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
         return <Pill className="h-4 w-4" />;
       case "APPOINTMENT":
         return <Stethoscope className="h-4 w-4" />;
-      case "JOURNAL":
-        return <BookOpen className="h-4 w-4" />;
       case "TREATMENT":
         return <Cross className="h-4 w-4" />;
       default:
@@ -404,22 +427,25 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
               <SheetHeader>
                 <SheetTitle>List of Completed Tasks</SheetTitle>
               </SheetHeader>
-              {completedTasks.map((cTask) => (
-                <TaskCard
-                  key={cTask.id}
-                  task={cTask}
-                  onDelete={handleDelete}
-                  onComplete={handleComplete}
-                  onUndoComplete={handleUndoComplete}
-                  onOpenChange={handleOpenChange}
-                  onTagDelete={handleTaskTagDelete}
-                  isCompleted={true}
-                  onMedScheduleMarkTaken={handleMedTaskScheduleMarkTaken}
-                  onMedScheduleDelete={handleMedTaskScheduleTakenDelete}
-                  onMedScheduleUndoTaken={handleMedTaskScheduleUndoTaken}
-                  permission={listPermission}
-                />
-              ))}
+              <ScrollArea className="h-[calc(100vh-5rem)] pr-4">
+                {completedTasks.map((cTask) => (
+                  <TaskCard
+                    key={cTask.id}
+                    task={cTask}
+                    onDelete={handleDelete}
+                    onComplete={handleComplete}
+                    onUndoComplete={handleUndoComplete}
+                    onOpenChange={handleOpenChange}
+                    onTagDelete={handleTaskTagDelete}
+                    onCommentDelete={handleCommentDelete}
+                    isCompleted={true}
+                    onMedScheduleMarkTaken={handleMedTaskScheduleMarkTaken}
+                    onMedScheduleDelete={handleMedTaskScheduleTakenDelete}
+                    onMedScheduleUndoTaken={handleMedTaskScheduleUndoTaken}
+                    permission={listPermission}
+                  />
+                ))}
+              </ScrollArea>
             </SheetContent>
           </Sheet>
 
@@ -427,25 +453,30 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
             <SheetTrigger asChild>
               <Button variant="outline">View Archived Tasks</Button>
             </SheetTrigger>
-            <SheetContent>
+            <SheetContent side="left">
               <SheetHeader>
                 <SheetTitle>List of Archived Tasks</SheetTitle>
               </SheetHeader>
-              {archivedTasks.map((archTask) => (
-                <TaskCard
-                  key={archTask.id}
-                  task={archTask}
-                  onDelete={handleDelete}
-                  onComplete={handleComplete}
-                  onUndoComplete={handleUndoComplete}
-                  onTagDelete={handleTaskTagDelete}
-                  onOpenChange={handleOpenChange}
-                  onMedScheduleMarkTaken={handleMedTaskScheduleMarkTaken}
-                  onMedScheduleDelete={handleMedTaskScheduleTakenDelete}
-                  onMedScheduleUndoTaken={handleMedTaskScheduleUndoTaken}
-                  permission={listPermission}
-                />
-              ))}
+              <ScrollArea className="h-[calc(100vh-5rem)] pr-4">
+                {" "}
+                {/* Adjust height as needed */}{" "}
+                {archivedTasks.map((archTask) => (
+                  <TaskCard
+                    key={archTask.id}
+                    task={archTask}
+                    onDelete={handleDelete}
+                    onComplete={handleComplete}
+                    onUndoComplete={handleUndoComplete}
+                    onTagDelete={handleTaskTagDelete}
+                    onCommentDelete={handleCommentDelete}
+                    onOpenChange={handleOpenChange}
+                    onMedScheduleMarkTaken={handleMedTaskScheduleMarkTaken}
+                    onMedScheduleDelete={handleMedTaskScheduleTakenDelete}
+                    onMedScheduleUndoTaken={handleMedTaskScheduleUndoTaken}
+                    permission={listPermission}
+                  />
+                ))}
+              </ScrollArea>
             </SheetContent>
           </Sheet>
           <Dialog onOpenChange={handleOpenChange}>
@@ -514,6 +545,7 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
                     onComplete={handleComplete}
                     onOpenChange={handleOpenChange}
                     onTagDelete={handleTaskTagDelete}
+                    onCommentDelete={handleCommentDelete}
                     onMedScheduleMarkTaken={handleMedTaskScheduleMarkTaken}
                     onMedScheduleDelete={handleMedTaskScheduleTakenDelete}
                     onMedScheduleUndoTaken={handleMedTaskScheduleUndoTaken}

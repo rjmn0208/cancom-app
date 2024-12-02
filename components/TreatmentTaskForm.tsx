@@ -31,7 +31,7 @@ import { Checkbox } from "./ui/checkbox";
 
 const formSchema = z.object({
   //base task fields
-  title: z.string(),
+  title: z.string().min(1, { message: "Title is empty" }),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]).nullable(),
   isDone: z.boolean(),
   isArchived: z.boolean(),
@@ -41,7 +41,7 @@ const formSchema = z.object({
   //treatment task fields
   medicalInstitutionId: z.number().nullable(),
   treatmentType: z.string(),
-  date: z.date().nullable(),
+  date: z.date(),
   dosage: z.number().nullable(),
 });
 
@@ -51,6 +51,12 @@ interface TreatmenTaskFormProps {
   treatmentTask?: Partial<TreatmentTask>;
   taskListId?: number;
 }
+
+const validateDueDate = (dueDate: Date) => {
+  return dueDate < new Date()
+    ? "Due date must be after the current date"
+    : null;
+};
 
 const TreatmentTaskForm: React.FC<TreatmenTaskFormProps> = ({
   treatmentTask,
@@ -76,7 +82,7 @@ const TreatmentTaskForm: React.FC<TreatmenTaskFormProps> = ({
           //treatment task fields
           medicalInstitutionId: treatmentTask.medicalInstitutionId,
           treatmentType: treatmentTask.treatmentType,
-          date: treatmentTask.date ? new Date(treatmentTask.date) : null,
+          date: treatmentTask.date ? new Date(treatmentTask.date) : new Date(),
           dosage: Number(treatmentTask.dosage),
         }
       : {
@@ -91,7 +97,7 @@ const TreatmentTaskForm: React.FC<TreatmenTaskFormProps> = ({
           //treatment task fields
           medicalInstitutionId: null,
           treatmentType: "",
-          date: null,
+          date: new Date(),
           dosage: null,
         },
   });
@@ -119,6 +125,13 @@ const TreatmentTaskForm: React.FC<TreatmenTaskFormProps> = ({
 
   const onSubmit = async (values: FormSchemaType) => {
     const supabase = createClient();
+    if (values.date) {
+      const validationError = validateDueDate(values?.date);
+      if (validationError && !treatmentTask) {
+        toast.error(validationError);
+        return;
+      }
+    }
     if (treatmentTask) {
       const { data: TaskData, error: TaskError } = await supabase
         .from("Task")
@@ -317,7 +330,7 @@ const TreatmentTaskForm: React.FC<TreatmenTaskFormProps> = ({
                         <p>{institution.Address.province}</p>
                         <p>{institution.Address.country}</p>
                       </SelectItem>
-                    ),
+                    )
                   )}
                 </SelectContent>
               </Select>

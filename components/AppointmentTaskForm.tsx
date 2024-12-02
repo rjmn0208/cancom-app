@@ -31,7 +31,7 @@ import { Checkbox } from "./ui/checkbox";
 
 const formSchema = z.object({
   //base task fields
-  title: z.string(),
+  title: z.string().min(1, { message: "Title is empty" }),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]).nullable(),
   isDone: z.boolean(),
   isArchived: z.boolean(),
@@ -40,7 +40,7 @@ const formSchema = z.object({
 
   //appointment task fields
   doctorId: z.number().nullable(),
-  appointmentDate: z.date().nullable(),
+  appointmentDate: z.date(),
   purpose: z.string().min(1, "Purpose is required"),
   doctorsNotes: z.string(),
 });
@@ -51,6 +51,12 @@ interface AppointmentTaskFormProps {
   appointmentTask?: Partial<AppointmentTask>;
   taskListId?: number;
 }
+
+const validateDueDate = (dueDate: Date) => {
+  return dueDate < new Date()
+    ? "Due date must be after the current date"
+    : null;
+};
 
 const AppointmentTaskForm: React.FC<AppointmentTaskFormProps> = ({
   appointmentTask,
@@ -75,7 +81,7 @@ const AppointmentTaskForm: React.FC<AppointmentTaskFormProps> = ({
           doctorId: appointmentTask.doctorId,
           appointmentDate: appointmentTask.appointmentDate
             ? new Date(appointmentTask.appointmentDate)
-            : null,
+            : new Date(),
           purpose: appointmentTask.purpose,
           doctorsNotes: appointmentTask.doctorsNotes,
         }
@@ -90,7 +96,7 @@ const AppointmentTaskForm: React.FC<AppointmentTaskFormProps> = ({
 
           //appointment task fields
           doctorId: null,
-          appointmentDate: null,
+          appointmentDate: new Date(),
           purpose: "",
           doctorsNotes: "",
         },
@@ -98,7 +104,6 @@ const AppointmentTaskForm: React.FC<AppointmentTaskFormProps> = ({
 
   const fetchTasks = async () => {
     const supabase = createClient();
-
     const { data, error } = await supabase
       .from("Task")
       .select("*")
@@ -119,6 +124,18 @@ const AppointmentTaskForm: React.FC<AppointmentTaskFormProps> = ({
 
   const onSubmit = async (values: FormSchemaType) => {
     const supabase = createClient();
+    if (!values.doctorId) {
+      toast.error("Set a doctor for the appointment");
+      return;
+    }
+
+    if (values.appointmentDate) {
+      const validationError = validateDueDate(values?.appointmentDate);
+      if (validationError && !appointmentTask) {
+        toast.error(validationError);
+        return;
+      }
+    }
     if (appointmentTask) {
       const { data: TaskData, error: TaskError } = await supabase
         .from("Task")
@@ -189,7 +206,7 @@ const AppointmentTaskForm: React.FC<AppointmentTaskFormProps> = ({
             doctorsNotes: values.doctorsNotes,
           },
         ]);
-        console.log(AppointmentTaskError)
+
       if (!AppointmentTaskError)
         toast.success("Appointment details saved sucessfully");
     }
@@ -214,6 +231,7 @@ const AppointmentTaskForm: React.FC<AppointmentTaskFormProps> = ({
               <FormControl>
                 <Input {...field} type="text" placeholder="Enter Title" />
               </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -434,3 +452,4 @@ const AppointmentTaskForm: React.FC<AppointmentTaskFormProps> = ({
 };
 
 export default AppointmentTaskForm;
+  

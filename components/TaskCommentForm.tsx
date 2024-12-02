@@ -17,10 +17,10 @@ import { toast } from "sonner";
 import { Button } from "./ui/button";
 
 const formSchema = z.object({
-  taskId: z.number(),
-  authorId: z.string(),
+  taskId: z.number().optional(),
+  authorId: z.string().optional(),
   content: z.string(),
-  timestamp: z.date(),
+  timestamp: z.date().default(new Date()),
 });
 
 type FormSchemaType = z.infer<typeof formSchema>;
@@ -55,7 +55,7 @@ const TaskCommentForm: React.FC<TaskCommentFormProp> = ({
 
   const onSubmit = async (values: FormSchemaType) => {
     const supabase = createClient();
-
+    console.log('onsubmit ',values)
     if (taskComment) {
       const { data, error } = await supabase
         .from("Comment")
@@ -80,7 +80,7 @@ const TaskCommentForm: React.FC<TaskCommentFormProp> = ({
     }
   };
 
-  
+
 
   return (
     <Form {...form}>
