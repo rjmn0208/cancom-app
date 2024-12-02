@@ -5,13 +5,13 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "./ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "./ui/form";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 
 const formSchema = z.object({
   taskId: z.number().nullable(),
-  value: z.string(),
+  value: z.string().min(1, 'Add a value'),
   color: z.string(),
   createdBy: z.string(),
 });
@@ -78,6 +78,7 @@ const TaskTagForm: React.FC<TaskTagFormProps> = ({ taskTag, task }) => {
               <FormControl>
                 <Input {...field} type="text" placeholder="Enter Value" />
               </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />
