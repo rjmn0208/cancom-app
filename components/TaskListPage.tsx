@@ -89,37 +89,49 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
     const {
       data: { user },
     } = await supabase.auth.getUser();
-
+  
     const { data, error } = await supabase
       .from("Task")
       .select(
-        "*, Comment(*, Author: User(*)), TaskTag(*), TaskCreator: User(*), JournalEntry(*),ExerciseTask (*), MedicationTask(*,MedicationTaskSchedule(*)), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))"
+        "*, Comment(*, Author: User(*)), TaskTag(*), TaskCreator: User(*), ExerciseTask(*), MedicationTask(*, MedicationTaskSchedule(*)), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))"
       )
       .eq("taskListId", taskListId)
       .eq("isDone", true)
-      .or(`isArchived.eq.false,taskCreator.eq.${user?.id}`);  
-
-    if (!error && data) setCompletedTasks(data);
+      .eq("isArchived", false) // Completed tasks are not archived
+      .eq("taskCreator", user?.id); // Ensure only tasks created by the user
+  
+    if (error) {
+      console.error("Error fetching completed tasks:", error.message);
+    } else {
+      console.log("Fetched completed tasks:", data);
+      setCompletedTasks(data || []);
+    }
   };
+  
 
   const fetchArchivedTasks = async () => {
     const supabase = createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
-
+  
     const { data, error } = await supabase
       .from("Task")
       .select(
-        "*, Comment(*, Author: User(*)), TaskTag(*), TaskCreator: User(*), JournalEntry(*),ExerciseTask (*), MedicationTask(*,MedicationTaskSchedule(*)), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))"
+        "*, Comment(*, Author: User(*)), TaskTag(*), TaskCreator: User(*), ExerciseTask(*), MedicationTask(*, MedicationTaskSchedule(*)), AppointmentTask(*, Doctor(*, User(*))), TreatmentTask(*, MedicalInstitution(*, Address(*)))"
       )
       .eq("taskListId", taskListId)
       .eq("isArchived", true)
-      .eq("isDone", false)
-      .eq("taskCreator", user?.id);
-
-    if (!error && data) setArchivedTasks(data);
+      .eq("taskCreator", user?.id); // Ensure tasks belong to the user
+  
+    if (error) {
+      console.error("Error fetching archived tasks:", error.message);
+    } else {
+      console.log("Fetched archived tasks:", data);
+      setArchivedTasks(data || []);
+    }
   };
+  
 
   const handleTaskTagDelete = async (tag: TaskTag) => {
     const supabase = createClient();
@@ -158,6 +170,7 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
       toast.success("Task deleted successfully");
       fetchTasks();
       fetchCompletedTasks();
+      fetchArchivedTasks()
     }
   };
 
@@ -246,6 +259,7 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
       toast.success("Task undoed");
       fetchTasks();
       fetchCompletedTasks();
+      fetchArchivedTasks()
     }
   };
 
