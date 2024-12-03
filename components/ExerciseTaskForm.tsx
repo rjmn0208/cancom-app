@@ -30,7 +30,7 @@ import { format } from "date-fns";
 
 const formSchema = z.object({
   //base task fields
-  title: z.string(),
+  title: z.string().min(1, { message: "Title is empty" }),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]).nullable(),
   isDone: z.boolean(),
   isArchived: z.boolean(),
@@ -204,6 +204,7 @@ const ExerciseTaskForm: React.FC<ExerciseTaskFormProps> = ({
               <FormControl>
                 <Input {...field} type="text" placeholder="Enter Title" />
               </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />

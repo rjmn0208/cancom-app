@@ -38,7 +38,6 @@ const TaskListManagementPage = () => {
           <TableHead>Patient</TableHead>
           <TableHead>Uncompleted Tasks</TableHead>
           <TableHead>Completed Tasks</TableHead>
-          <TableHead>Action</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>

@@ -27,19 +27,20 @@ import { CalendarIcon } from "lucide-react";
 
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { Patient } from "@/lib/types";
+import { CancerType, Patient } from "@/lib/types";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
+import { useEffect, useState } from "react";
 
 const formSchema = z.object({
-  cancerType: z.string(),
+  cancerTypeId: z.number().nullable(),
   cancerStage: z.enum([
     "STAGE_0",
     "STAGE_I",
     "STAGE_II",
     "STAGE_III",
     "STAGE_IV",
-  ]),
+  ]).nullable(),
   diagnosisDate: z.date(),
 });
 
@@ -50,16 +51,28 @@ interface PatientFormProps {
 }
 
 const PatientForm: React.FC<PatientFormProps> = ({ patient }) => {
+  const [cancerTypes, setCancerTypes] = useState<CancerType[]>([]);
+
+  const fetchCancerTypes = async () => {
+    const supabase = createClient();
+
+    const { data, error } = await supabase.from("CancerType").select("*");
+
+    if (!error) setCancerTypes(data);
+  };
+
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
-    defaultValues: patient
+    defaultValues: (patient)
       ? {
-          cancerType: patient.cancerType,
+          cancerTypeId: patient.cancerTypeId,
           cancerStage: patient.cancerStage,
-          diagnosisDate: patient.diagnosisDate,
+          diagnosisDate: (patient.diagnosisDate) ? new Date(patient.diagnosisDate) : new Date(),
         }
       : {
-          cancerType: "",
+          cancerTypeId: null,
+          cancerStage: null,
+          diagnosisDate: new Date(),
         },
   });
 
@@ -69,9 +82,9 @@ const PatientForm: React.FC<PatientFormProps> = ({ patient }) => {
       const { data, error } = await supabase
         .from("Patient")
         .update({
-          cancerType: values.cancerType,
+          cancerTypeId: values.cancerTypeId,
           cancerStage: values.cancerStage,
-          diagnosisDate: values.diagnosisDate.toISOString(),
+          diagnosisDate: values.diagnosisDate?.toISOString(),
         })
         .eq("id", patient.id);
 
@@ -84,7 +97,7 @@ const PatientForm: React.FC<PatientFormProps> = ({ patient }) => {
 
       const { data, error } = await supabase.from("Patient").insert({
         userId: user?.id,
-        cancerType: values.cancerType,
+        cancerType: values.cancerTypeId,
         cancerStage: values.cancerStage,
         diagnosisDate: values.diagnosisDate.toISOString(),
       });
@@ -93,18 +106,38 @@ const PatientForm: React.FC<PatientFormProps> = ({ patient }) => {
     }
   };
 
+  useEffect(() => {
+    fetchCancerTypes();
+  }, []);
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <FormField
           control={form.control}
-          name="cancerType"
+          name="cancerTypeId"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Cancer Type:</FormLabel>
-              <FormControl>
-                <Input {...field} type="text" />
-              </FormControl>
+              <Select
+                onValueChange={(value) =>
+                  field.onChange(value ? Number(value) : null)
+                }
+                defaultValue={field.value?.toString() || ""}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Cancer Type" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {cancerTypes?.map((type: CancerType) => (
+                    <SelectItem key={type.id} value={type.id.toString()}>
+                      {type.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
@@ -115,7 +148,10 @@ const PatientForm: React.FC<PatientFormProps> = ({ patient }) => {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Cancer Stage:</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value || ""}
+              >
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="" />

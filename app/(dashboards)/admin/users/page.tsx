@@ -41,7 +41,7 @@ export default function UserManagement() {
     const { data, error } = await supabase
       .from("User")
       .select(
-        "*,Patient(*,CancerType(*)), Caretaker(*), Doctor(*), MedicalStaff(*,MedicalInstitution(*)), Address(*)"
+        "*,Patient(*,CancerType(*)), Caretaker(*), Doctor(*, Specialization(*)), MedicalStaff(*,MedicalInstitution(*)), Address(*)"
       );
       
     if (!error) setUsers(data);
@@ -181,6 +181,7 @@ export default function UserManagement() {
                         <div>
                           <h3 className="font-semibold">Doctor Information</h3>
                           <p>License Number: {user.Doctor.licenseNumber}</p>
+                          <p>Specialization: {user.Doctor.Specialization.name}</p>
                         </div>
                       )}
 

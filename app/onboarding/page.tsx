@@ -11,7 +11,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { createClient } from "@/utils/supabase/client";
-import { CancerType, MedicalInstitution, UserType } from "@/lib/types";
+import { CancerType, MedicalInstitution, Specialization, UserType } from "@/lib/types";
 import { toast } from "sonner";
 import {
   Select,
@@ -26,12 +26,7 @@ import { useEffect, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import AddressForm from "@/components/AddressForm";
 import { Progress } from "@/components/ui/progress";
 import { useRouter } from "next/navigation";
@@ -51,16 +46,13 @@ const formSchema = z.object({
 
   // Patient fields
   cancerTypeId: z.number().nullable(),
-  cancerStage: z.enum([
-    "STAGE_0",
-    "STAGE_I",
-    "STAGE_II",
-    "STAGE_III",
-    "STAGE_IV",
-  ]).optional(),
+  cancerStage: z
+    .enum(["STAGE_0", "STAGE_I", "STAGE_II", "STAGE_III", "STAGE_IV"])
+    .optional(),
   diagnosisDate: z.date().optional(),
 
   // Doctor fields
+  specializationId: z.number().nullable(),
   licenseNumber: z.string().optional(),
 
   // Caretaker fields
@@ -84,6 +76,7 @@ const refreshSession = async () => {
 
 const OnboardingPage = () => {
   const [cancerTypes, setCancerTypes] = useState<CancerType[]>([]);
+  const [specializations, setSpecializations] = useState<Specialization[]>([])
   const [medicalInstitutions, setMedicalInstitutions] = useState<
     MedicalInstitution[]
   >([]);
@@ -108,6 +101,7 @@ const OnboardingPage = () => {
       diagnosisDate: undefined,
 
       // Doctor fields
+      specializationId: null,
       licenseNumber: "",
 
       // Caretaker field
@@ -122,6 +116,16 @@ const OnboardingPage = () => {
 
   const router = useRouter();
   const userTypeState = form.watch("userType");
+
+  const fetchSpecializations = async () => {
+    const supabase = createClient()
+
+    const {data, error } = await supabase
+    .from('Specialization')
+    .select('*')
+
+    if(!error) setSpecializations(data)
+  }
 
   const fetchCancerTypes = async () => {
     const supabase = createClient();
@@ -167,14 +171,14 @@ const OnboardingPage = () => {
 
       switch (values.userType) {
         case "PATIENT":
-          const { error: patientError } = await supabase.from("Patient").insert(
-            {
+          const { error: patientError } = await supabase
+            .from("Patient")
+            .insert({
               userId: user?.id,
               cancerTypeId: values.cancerTypeId,
               cancerStage: values.cancerStage,
               diagnosisDate: values.diagnosisDate,
-            }
-          );
+            });
           if (patientError) throw patientError;
           break;
 
@@ -191,6 +195,7 @@ const OnboardingPage = () => {
         case "DOCTOR":
           const { error: doctorError } = await supabase.from("Doctor").insert({
             userId: user?.id,
+            specializationId: values.specializationId,
             licenseNumber: values.licenseNumber,
           });
           if (doctorError) throw doctorError;
@@ -218,9 +223,9 @@ const OnboardingPage = () => {
 
   useEffect(() => {
     fetchCancerTypes();
+    fetchSpecializations();
     fetchMedicalInstitutions();
   }, []);
-
 
   return (
     <div className="flex flex-row min-h-screen">
@@ -269,7 +274,7 @@ const OnboardingPage = () => {
                                   <SelectItem key={value} value={value}>
                                     {value}
                                   </SelectItem>
-                                ),
+                                )
                               )}
                             </SelectContent>
                           </Select>
@@ -513,6 +518,40 @@ const OnboardingPage = () => {
                     <>
                       <FormField
                         control={form.control}
+                        name="specializationId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Cancer Type:</FormLabel>
+                            <Select
+                              onValueChange={(value) =>
+                                field.onChange(value ? Number(value) : null)
+                              }
+                              defaultValue={field.value?.toString() || ""}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select Cancer Type" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {specializations?.map(
+                                  (spec: Specialization) => (
+                                    <SelectItem
+                                      key={spec.id}
+                                      value={spec.id.toString()}
+                                    >
+                                      {spec.name}
+                                    </SelectItem>
+                                  )
+                                )}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
                         name="licenseNumber"
                         render={({ field }) => (
                           <FormItem>
@@ -567,7 +606,7 @@ const OnboardingPage = () => {
                                       <p>{institution.Address.province}</p>
                                       <p>{institution.Address.country}</p>
                                     </SelectItem>
-                                  ),
+                                  )
                                 )}
                               </SelectContent>
                             </Select>
@@ -617,19 +656,18 @@ const OnboardingPage = () => {
               </Form>
             )}
 
-              {currentPage === 2 && (
-                <>
-                  <AddressForm
-                    onFinish={async () => {
-                      // Refresh session and navigate after successful address submission
-                      await refreshSession();
-                      router.push(`/${userTypeState?.toLocaleLowerCase()}`);
-                      setCurrentProgressBarValue(100); // Update progress bar
-                    }}
-                  />
-                </>
-              )}
-
+            {currentPage === 2 && (
+              <>
+                <AddressForm
+                  onFinish={async () => {
+                    // Refresh session and navigate after successful address submission
+                    await refreshSession();
+                    router.push(`/${userTypeState?.toLocaleLowerCase()}`);
+                    setCurrentProgressBarValue(100); // Update progress bar
+                  }}
+                />
+              </>
+            )}
           </CardContent>
         </Card>
       </div>

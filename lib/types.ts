@@ -83,7 +83,7 @@ export interface VitalReading {
 export interface Patient {
   id: number;
   userId: string;
-  cancerTypeId: string;
+  cancerTypeId: number;
   cancerStage: CancerStage;
   diagnosisDate: Date;
 
@@ -116,8 +116,10 @@ export interface User {
 export interface Doctor {
   id: number;
   userId: string;
+  specializationId: number;
   licenseNumber: string;
 
+  Specialization: Specialization
   User: User;
 }
 
@@ -326,4 +328,9 @@ export interface JournalTag {
 
   JournalEntry: JournalEntry;
   Task: Task;
+}
+
+export interface Specialization {
+  id: number;
+  name: string;
 }

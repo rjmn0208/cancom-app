@@ -84,7 +84,7 @@ export default function ProfilePage() {
     } else if (userData.userType === "DOCTOR") {
       const { data: doctor } = await supabase
         .from("Doctor")
-        .select("*")
+        .select("*, Specialization(*)")
         .eq("userId", user.id)
         .single();
       doctorData = doctor;
@@ -279,6 +279,10 @@ export default function ProfilePage() {
                       License Number
                     </div>
                     <div>{doctor.licenseNumber}</div>
+                    <div className="text-sm font-medium text-muted-foreground">
+                      Specialization
+                    </div>
+                    <div>{doctor.Specialization.name}</div>
                   </div>
                 </div>
               )}
