@@ -75,7 +75,6 @@ export default function UserManagement() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>ID</TableHead>
             <TableHead>Honorific</TableHead>
             <TableHead>Full Name</TableHead>
             <TableHead>Gender</TableHead>
@@ -87,7 +86,6 @@ export default function UserManagement() {
         <TableBody>
           {users?.map((user: User) => (
             <TableRow key={user.id}>
-              <TableCell>{user.id}</TableCell>
               <TableCell>{user.honorific}</TableCell>
               <TableCell>
                 {user.firstName} {user.middleName} {user.lastName}
