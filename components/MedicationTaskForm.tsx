@@ -5,6 +5,7 @@ import {
   MedicationTask,
   MedicationTaskSchedule,
   Task,
+  TaskPriority,
   TaskType,
   Time,
 } from "@/lib/types";
@@ -55,7 +56,7 @@ const timeSchema = z.object({
 const formSchema = z.object({
   //base task fields
   title: z.string().min(1, {message: 'Title is empty'}),
-  priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]).nullable(),
+  priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]),
   isDone: z.boolean(),
   isArchived: z.boolean(),
   prerequisiteTaskId: z.number().nullable(),
@@ -132,7 +133,7 @@ const MedicationTaskForm: React.FC<MedicationTaskFormProps> = ({
         }
       : {
           title: "",
-          priority: null,
+          priority: TaskPriority.LOW,
           isDone: false,
           isArchived: false,
           prerequisiteTaskId: null,
@@ -456,7 +457,7 @@ const MedicationTaskForm: React.FC<MedicationTaskFormProps> = ({
                 <Textarea {...field} />
               </FormControl>
               <FormDescription>
-                You may add instruction on how the medicine should be taken
+                Add instruction on how the medicine should be taken
               </FormDescription>
               <FormMessage />
             </FormItem>

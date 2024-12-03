@@ -114,7 +114,10 @@ const TreatmentPage = () => {
       .delete()
       .eq("id", treatment.id);
 
-    if (!error) toast.success("Treatment deleted successfully");
+    if (!error) {
+      toast.success("Treatment deleted successfully")
+      fetchTreatmentTasks()
+    };
   };
 
   const handleMarkComplete = async (treatment: TreatmentTask) => {

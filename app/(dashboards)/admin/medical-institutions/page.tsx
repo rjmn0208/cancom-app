@@ -168,16 +168,19 @@ const MedicalInstitutionsPage = () => {
 
   const openAddModal = () => {
     setSelectedInstitution(null); // Clear selected institution for adding
+    fetchInstitutions();
     setIsModalOpen(true);
   };
 
   const openEditModal = (institution: MedicalInstitution) => {
     setSelectedInstitution(institution); // Set the selected institution for editing
+    fetchInstitutions();
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
+    fetchInstitutions();
     setSelectedInstitution(null); // Clear selected institution when modal closes
   };
 

@@ -22,7 +22,7 @@ import {
 import { Button } from "./ui/button";
 import { format } from "date-fns";
 import { createClient } from "@/utils/supabase/client";
-import { Task, TaskType } from "@/lib/types";
+import { Task, TaskPriority, TaskType } from "@/lib/types";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import { Checkbox } from "./ui/checkbox";
@@ -32,8 +32,8 @@ import { toast } from "sonner";
 const formSchema = z.object({
   title: z.string().min(1, {message: 'Title is empty'}),
   description: z.string().optional(),
-  priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]).nullable(),
-  dueDate: z.date().nullable(),
+  priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]),
+  dueDate: z.date(),
   isDone: z.boolean(),
   isArchived: z.boolean(),
   prerequisiteTaskId: z.number().nullable(),
@@ -62,7 +62,7 @@ const GeneralTaskForm: React.FC<TaskFormProps> = ({ task, taskListId }) => {
           title: task.title,
           description: task.description,
           priority: task.priority,
-          dueDate: task.dueDate ? new Date(task.dueDate) : null,
+          dueDate: task.dueDate ? new Date(task.dueDate) : new Date(),
           isDone: task.isDone,
           isArchived: task.isArchived,
           prerequisiteTaskId: task.prerequisiteTaskId,
@@ -71,8 +71,8 @@ const GeneralTaskForm: React.FC<TaskFormProps> = ({ task, taskListId }) => {
       : {
           title: "",
           description: "",
-          priority: null,
-          dueDate: null,
+          priority: TaskPriority.LOW,
+          dueDate: new Date(),
           isDone: false,
           isArchived: false,
           prerequisiteTaskId: null,

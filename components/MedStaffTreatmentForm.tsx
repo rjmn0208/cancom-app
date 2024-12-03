@@ -31,7 +31,7 @@ const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
   patientId: z.number().nullable(),
   description: z.string(),
-  priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]).nullable(),
+  priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]),
   treatmentType: z.string().min(1, "Treatment type is required"),
   date: z.date(),
   dosage: z.number().optional(),
@@ -44,6 +44,11 @@ interface MedStaffTreatmentFormProps {
   treatment?: any;
 }
 
+const validateDueDate = (dueDate: Date) => {
+  return dueDate < new Date()
+    ? "Due date must be after the current date"
+    : null;
+};
 const MedStaffTreatmentForm: React.FC<MedStaffTreatmentFormProps> = ({
   treatment,
 }) => {
@@ -68,7 +73,7 @@ const MedStaffTreatmentForm: React.FC<MedStaffTreatmentFormProps> = ({
           treatmentType: "",
           date: new Date(),
           dosage: undefined,
-          priority: null,
+          priority: TaskPriority.LOW,
         },
   });
 
@@ -90,6 +95,13 @@ const MedStaffTreatmentForm: React.FC<MedStaffTreatmentFormProps> = ({
       return;
     }
     
+    if (values.date) {
+      const validationError = validateDueDate(values?.date);
+      if (validationError && !treatment) {
+        toast.error(validationError);
+        return;
+      }
+    }
 
     if(treatment) {
       

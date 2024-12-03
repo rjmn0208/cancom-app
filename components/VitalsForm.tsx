@@ -28,8 +28,8 @@ import {
 } from "./ui/card";
 
 const formSchema = z.object({
-  name: z.string(),
-  unitOfMeasure: z.string(),
+  name: z.string().min(1, "Name must not be empty"),
+  unitOfMeasure: z.string().min(1, "Unit Of Measure must not be empty"),
   description: z.string(),
 });
 

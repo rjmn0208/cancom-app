@@ -1,6 +1,6 @@
 "use client";
 
-import { ExerciseTask, Task, TaskType } from "@/lib/types";
+import { ExerciseTask, Task, TaskPriority, TaskType } from "@/lib/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -31,10 +31,10 @@ import { format } from "date-fns";
 const formSchema = z.object({
   //base task fields
   title: z.string().min(1, { message: "Title is empty" }),
-  priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]).nullable(),
+  priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]),
   isDone: z.boolean(),
   isArchived: z.boolean(),
-  dueDate: z.date().nullable(),
+  dueDate: z.date(),
   prerequisiteTaskId: z.number().nullable(),
   parentTaskId: z.number().nullable(),
 
@@ -70,7 +70,7 @@ const ExerciseTaskForm: React.FC<ExerciseTaskFormProps> = ({
           isArchived: exerciseTask.isArchived,
           prerequisiteTaskId: exerciseTask.prerequisiteTaskId,
           parentTaskId: exerciseTask.parentTaskId,
-          dueDate: exerciseTask.dueDate ? new Date(exerciseTask.dueDate) : null,
+          dueDate: exerciseTask.dueDate ? new Date(exerciseTask.dueDate) : new Date(),
 
           //appointment task fields
           name: exerciseTask.name,
@@ -82,12 +82,12 @@ const ExerciseTaskForm: React.FC<ExerciseTaskFormProps> = ({
       : {
           //base task fields
           title: "",
-          priority: null,
+          priority: TaskPriority.LOW,
           isDone: false,
           isArchived: false,
           prerequisiteTaskId: null,
           parentTaskId: null,
-          dueDate: null,
+          dueDate: new Date(),
 
           //appointment task fields
           name: "",

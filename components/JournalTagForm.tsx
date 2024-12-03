@@ -5,13 +5,13 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "./ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "./ui/form";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 
 const formSchema = z.object({
   journalId: z.number().nullable(),
-  value: z.string(),
+  value: z.string().min(1, "Value must not be empty"),
   color: z.string(),
   createdAt: z.date(),
 });
@@ -79,6 +79,7 @@ const JournalTagForm: React.FC<JournalTagFormProps> = ({
               <FormControl>
                 <Input {...field} type="text" placeholder="Enter Value" />
               </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -91,6 +92,7 @@ const JournalTagForm: React.FC<JournalTagFormProps> = ({
               <FormControl>
                 <Input {...field} type="text" placeholder="Enter Color" />
               </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />

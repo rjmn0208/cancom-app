@@ -1,6 +1,6 @@
 "use client";
 
-import { AppointmentTask, Doctor, Task, TaskType } from "@/lib/types";
+import { AppointmentTask, Doctor, Task, TaskPriority, TaskType } from "@/lib/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -32,7 +32,7 @@ import { Checkbox } from "./ui/checkbox";
 const formSchema = z.object({
   //base task fields
   title: z.string().min(1, { message: "Title is empty" }),
-  priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]).nullable(),
+  priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]),
   isDone: z.boolean(),
   isArchived: z.boolean(),
   prerequisiteTaskId: z.number().nullable(),
@@ -88,7 +88,7 @@ const AppointmentTaskForm: React.FC<AppointmentTaskFormProps> = ({
       : {
           //base task fields
           title: "",
-          priority: null,
+          priority: TaskPriority.LOW,
           isDone: false,
           isArchived: false,
           prerequisiteTaskId: null,

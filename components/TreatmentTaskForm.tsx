@@ -1,6 +1,6 @@
 "use client";
 
-import { MedicalInstitution, Task, TaskType, TreatmentTask } from "@/lib/types";
+import { MedicalInstitution, Task, TaskPriority, TaskType, TreatmentTask } from "@/lib/types";
 import { createClient } from "@/utils/supabase/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
@@ -32,14 +32,14 @@ import { Checkbox } from "./ui/checkbox";
 const formSchema = z.object({
   //base task fields
   title: z.string().min(1, { message: "Title is empty" }),
-  priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]).nullable(),
+  priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]),
   isDone: z.boolean(),
   isArchived: z.boolean(),
   prerequisiteTaskId: z.number().nullable(),
   parentTaskId: z.number().nullable(),
 
   //treatment task fields
-  medicalInstitutionId: z.number().nullable(),
+  medicalInstitutionId: z.number(),
   treatmentType: z.string(),
   date: z.date(),
   dosage: z.number().nullable(),
@@ -88,14 +88,13 @@ const TreatmentTaskForm: React.FC<TreatmenTaskFormProps> = ({
       : {
           //base task fields
           title: "",
-          priority: null,
+          priority: TaskPriority.LOW,
           isDone: false,
           isArchived: false,
           prerequisiteTaskId: null,
           parentTaskId: null,
 
           //treatment task fields
-          medicalInstitutionId: null,
           treatmentType: "",
           date: new Date(),
           dosage: null,
@@ -132,6 +131,7 @@ const TreatmentTaskForm: React.FC<TreatmenTaskFormProps> = ({
         return;
       }
     }
+
     if (treatmentTask) {
       const { data: TaskData, error: TaskError } = await supabase
         .from("Task")

@@ -4,7 +4,7 @@ import { CancerType } from "@/lib/types";
 import { z } from "zod";
 
 const formSchema = z.object({
-  name: z.string()
+  name: z.string().min(1, "Name must not be empty")
 });
 
 type FormSchemaType = z.infer<typeof formSchema>;

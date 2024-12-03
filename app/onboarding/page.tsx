@@ -521,7 +521,7 @@ const OnboardingPage = () => {
                         name="specializationId"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Cancer Type:</FormLabel>
+                            <FormLabel>Specialization:</FormLabel>
                             <Select
                               onValueChange={(value) =>
                                 field.onChange(value ? Number(value) : null)
@@ -530,7 +530,7 @@ const OnboardingPage = () => {
                             >
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Select Cancer Type" />
+                                  <SelectValue placeholder="Select Specialization" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>

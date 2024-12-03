@@ -12,7 +12,7 @@ import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 
 const formSchema = z.object({
-  name: z.string()
+  name: z.string().min(1, "Name must not be empty")
 });
 
 type FormSchemaType = z.infer<typeof formSchema>;
