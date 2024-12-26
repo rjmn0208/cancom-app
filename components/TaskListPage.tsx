@@ -130,6 +130,7 @@ const TaskListPage: React.FC<TaskListPageProps> = ({
       .delete()
       .eq("id", tag.id);
 
+    console.log(error)
     if (!error) {
       toast.success("Tag deleted successfully");
       fetchTasks();
